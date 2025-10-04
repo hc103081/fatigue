@@ -1,0 +1,37 @@
+import random
+
+class AlcoholSensor:
+    """
+    酒精感測器模組
+    """
+    def __init__(self, sensor_id):
+        """
+        Params:
+            sensor_id: 感測器ID
+        """
+        self.sensor_id = sensor_id
+        self.alcohol_level = 0.0
+
+    # 取得模擬的酒精濃度值
+    def get_alcohol(self):
+        """ 
+        Returns:
+            回傳模擬的酒精濃度值（0.0 到 0.2 之間的浮點數）
+        """
+        self.alcohol_level = round(random.uniform(0.0, 0.2), 3)
+        return self.alcohol_level
+
+    # 判斷酒精濃度是否超過限制值
+    def is_over_limit(self, limit=0.08):
+        """
+        Params:
+            limit: 酒精濃度限制值，預設為 0.08
+        Returns:
+            如果酒精濃度超過 limit 則回傳 True
+        """
+        return self.alcohol_level > limit
+
+    # 重置酒精濃度值
+    def reset(self):
+        """ 重置酒精濃度值 """
+        self.alcohol_level = 0.0
