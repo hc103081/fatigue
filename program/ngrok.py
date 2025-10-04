@@ -35,11 +35,14 @@ def ngrok_start():
             # 可在此以簡單字串解析 public url，例如匹配 "Forwarding
             if "Forwarding" in line and "http" in line:
                 print("可能的 tunnel 行: ", line.strip())
-        proc.wait()
     except KeyboardInterrupt:
         proc.send_signal(signal.SIGINT)
         proc.wait()
         print("ngrok terminated")
+    finally:
+        proc.terminate()
+        proc.wait()
+        print("ngrok end")
 
 if __name__ == "__main__":
     ngrok_start()
