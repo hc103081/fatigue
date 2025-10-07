@@ -12,6 +12,7 @@ def line_test():
         line_bot.sent_message(id,'gay')
         
 # 測試程式
+# 先測試line_bot
 def gpio_test():
     pin = 26
     
