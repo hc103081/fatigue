@@ -15,8 +15,7 @@ class Camera:
             
         except AttributeError:
             raise RuntimeError("無法初始化攝像頭，請檢查攝像頭是否連接正確")
-        finally:
-            self.cap.release()                # 釋放之前的攝像頭資源
+        
         
     # 讀取一幀影像
     def get_frame(self):

@@ -1,8 +1,4 @@
 
-from calendar import c
-import imp
-
-
 def line_test():
     from line_bot import Line_bot
 
