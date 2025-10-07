@@ -16,11 +16,23 @@ def gpio_test():
     
     print("start")
     try:
+        state = '0'
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(pin, GPIO.OUT)  # 設定 GPIO 為輸出模式 控制攝像頭開關
-        GPIO.output(pin, GPIO.HIGH)      # 預設攝像頭為開啟狀態
-        input("按 Enter 鍵退出程式...")
+        while True:
+            state = input("Enter state:")
+            if(state == '1'):
+                GPIO.output(pin, GPIO.HIGH)      # 預設攝像頭為開啟狀態
+                print(GPIO.input(26))
+                
+            elif(state == '0'):
+                GPIO.output(pin, GPIO.LOW)      # 預設攝像頭為開啟狀態
+            else:
+                break
+            print(GPIO.input(26))
+            
     except AttributeError:
-        raise RuntimeError("無法初始化攝像頭，請檢查攝像頭是否連接正確")
+        raise RuntimeError("無法")
     finally:
         GPIO.output(pin, GPIO.LOW)   # 關閉攝像頭
         GPIO.cleanup()                    # 清理 GPIO 狀態
