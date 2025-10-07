@@ -1,6 +1,8 @@
 from line_bot import Line_bot
-import RPi.GPIO as GPIO    
-from gpio import GPIO
+try:
+    import RPi.GPIO as GPIO     # type: ignore
+except ImportError:
+    from gpio import GPIO as GPIO
 
 
 def line_test():
@@ -10,7 +12,19 @@ def line_test():
         line_bot.sent_message(id,'gay')
         
 def gpio_test():
-    print("")
+    pin = 26
+    
+    print("start")
+    try:
+        GPIO.setup(pin, GPIO.OUT)  # 設定 GPIO 為輸出模式 控制攝像頭開關
+        GPIO.output(pin, GPIO.HIGH)      # 預設攝像頭為開啟狀態
+        input("按 Enter 鍵退出程式...")
+    except AttributeError:
+        raise RuntimeError("無法初始化攝像頭，請檢查攝像頭是否連接正確")
+    finally:
+        GPIO.output(pin, GPIO.LOW)   # 關閉攝像頭
+        GPIO.cleanup()                    # 清理 GPIO 狀態
+    print("end")
     
 
 if __name__ == "__main__":
