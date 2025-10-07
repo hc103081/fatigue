@@ -1,11 +1,11 @@
-from line_bot import Line_bot
-try:
-    import RPi.GPIO as GPIO     # type: ignore
-except ImportError:
-    from gpio import GPIO as GPIO
+
+from calendar import c
+import imp
 
 
 def line_test():
+    from line_bot import Line_bot
+
     line_bot = Line_bot()
     id = 'U44a5e3e3cf9c8835a64bb1273b08f457'
     for i in range(5):
@@ -13,6 +13,10 @@ def line_test():
         
 # 測試程式
 def gpio_test():
+    try:
+        import RPi.GPIO as GPIO     # type: ignore
+    except ImportError:
+        from gpio import GPIO as GPIO
     pin = 26
     
     print("start")
@@ -36,12 +40,30 @@ def gpio_test():
         raise RuntimeError("無法")
     finally:
         GPIO.output(pin, GPIO.LOW)   # 關閉攝像頭
-        GPIO.cleanup()                    # 清理 GPIO 狀態
+        GPIO.cleanup()               # 清理 GPIO 狀態
     print("end")
+    
+def camera_test():
+    from camera import Camera
+    import cv2
+    
+    camera = Camera()
+    while True:
+        # 从摄像头读取一帧
+        frame = camera.get_frame()
+        
+        # 显示帧
+        cv2.imshow('摄像头画面', frame)
+        # 按下 'q' 键退出循环
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    # 释放摄像头并关闭所有窗口
+    cv2.destroyAllWindows()
     
 
 if __name__ == "__main__":
-    gpio_test()
+    camera_test()
+    
 
 
 # 设置判断参数
