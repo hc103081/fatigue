@@ -11,6 +11,7 @@ def line_test():
     for i in range(5):
         line_bot.sent_message(id,'gay')
         
+# 測試程式
 def gpio_test():
     pin = 26
     
