@@ -56,9 +56,10 @@ def camera_test():
     # 释放摄像头并关闭所有窗口
     cv2.destroyAllWindows()
     
+    
 
 if __name__ == "__main__":
-    camera_test()
+    pass
     
 
 
