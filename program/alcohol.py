@@ -12,11 +12,17 @@ class AlcoholSensor:
         self.sensor_id = sensor_id
         self.alcohol_level = 0.0
 
+    def update(self):
+        """
+        更新感測器資料
+        """
+        pass
+    
     # 取得模擬的酒精濃度值
     def get_alcohol(self):
         """ 
         Returns:
-            回傳模擬的酒精濃度值（0.0 到 0.2 之間的浮點數）
+            回傳模擬的酒精濃度值
         """
         self.alcohol_level = round(random.uniform(0.0, 0.2), 3)
         return self.alcohol_level
