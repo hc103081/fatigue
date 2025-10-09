@@ -6,6 +6,13 @@ class FaceAnalyzer:
         self.model = None
         if model_path:
             self.load_model(model_path)
+            
+    def update():
+        """
+        更新影像分析數據
+        """
+        pass
+    
 
     def load_model(self, model_path):
         # 載入AI模型的接口

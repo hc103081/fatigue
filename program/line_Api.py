@@ -19,10 +19,9 @@ async def async_line_Api():
     global state_open
     state_open = True
     
-    loop = asyncio.new_event_loop()
-       
-    line_bot_task = loop.run_in_executor(None, Line_bot.app.run)
-    ngrok_task = loop.run_in_executor(None, ngrok_start())
+    line_bot_task = asyncio.to_thread(Line_bot.app.run)
+    ngrok_task = asyncio.to_thread(ngrok_start())
+    
     await asyncio.gather(line_bot_task, ngrok_task)
     
 def start_line_Api():

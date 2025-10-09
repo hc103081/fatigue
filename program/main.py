@@ -1,3 +1,6 @@
+import asyncio
+from asyncore import loop
+from cv2 import line
 from alcohol import AlcoholSensor
 from face_analyze import FaceAnalyzer
 from gpio import GPIO
@@ -5,9 +8,8 @@ from heart import HeartRateSensor
 from face_analyze import FaceAnalyzer
 import threading
 import time
-from line_bot import Line_bot
 from line_Api import start_line_Api
-import schedule
+from line_bot import Line_bot
 
 # Line用戶端user_id
 _user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'  
@@ -19,56 +21,130 @@ start_time = 8
 end_time = 20
 
 def main():
-
+    global line_bot
+    
     # 設置GPIO模式
     GPIO.setmode(GPIO.BCM)
-
+    
+    # 啟用Line_bot
+    line_bot = Line_bot()
+    
     # 主程式循環
     try:
-        # 啟動定時任務
-        threading.Thread(target=set_scheduled, 
-                        args=(_user_id,)
-                        ).start()
-        
-        # 啟動駕駛狀態監控
-        threading.Thread(target=monitor,
-                        args=(_user_id,)
-                        ).start()
-
-    except Exception as e:
-        print(f"發生錯誤: {e}")
-
-# 監控感測器數據並發送警告消息
-def monitor(user_id):
-    
-    try:
-        while True:
-            # 如果酒精濃度超過限制，發送警告消息
-            if alcohol_sensor.is_over_limit():
-                # line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
-                print("警告: 酒精濃度過高，請勿駕駛！")
-                time.sleep(10000)
-                
-            # 如果心率異常，發送警告消息
-            if heart_sensor.is_normal():
-                # line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
-                print("警告: 心率異常，請注意休息！")
-                time.sleep(10000)
+        with Monitor() as monitor:
+            # 啟動定時任務
+            schedule_thread = threading.Thread(target=set_scheduled, 
+                            args=(_user_id,)
+                            )
             
-            # 判斷人臉偵測到疲勞
-            if face_analyzer.is_fatigue():
-                # line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
-                print("警告: 人臉偵測到疲勞，請注意休息！")
-                time.sleep(10000) 
-                
-            time.sleep(1000)
-    
-    except KeyboardInterrupt:
-        print("監控任務停止")
-        raise SystemExit
+            # 啟動駕駛狀態監控
+            monitor_thread = threading.Thread(target=monitor.start,
+                            args=(_user_id,)
+                            )
+            
+            # 啟動Line API
+            line_api_thread = threading.Thread(target=start_line_Api,
+                            args=(_user_id,)
+                            )
+            
+            # 啟動並等待
+            schedule_thread.start()
+            monitor_thread.start()
+            line_api_thread.start()
+            
+            schedule_thread.join()
+            monitor_thread.join()
+            line_api_thread.join()
+
     except Exception as e:
         print(f"發生錯誤: {e}")
-        raise e
+
+class Monitor():
+    def __init__(self):
+        """
+        初始化套件
+        """
+        try:
+            global alcohol_sensor,heart_sensor,face_analyzer
+            # 啟動酒精感測器
+            alcohol_sensor = AlcoholSensor(1)
+            
+            # 啟動心率感測器
+            heart_sensor = HeartRateSensor()
+            
+            # 啟動人臉偵測器
+            face_analyzer = FaceAnalyzer()
+        
+        except Exception as e:
+            print(f"發生錯誤: {e}")
+            raise e
+    
+
+    # 監控感測器數據並發送警告消息
+    def start(self,user_id):
+        """
+        啟用感測器與監控
+        """
+        asyncio.run(self.asnyc_monitor(user_id))
+
+    async def asnyc_monitor(self,user_id):
+        """
+        監控感測器數據並發送警告消息
+        """
+        try:
+            while True:
+                # 刷新所有數據
+                alcohol_update = asyncio.to_thread(alcohol_sensor.update)
+                heart_update = asyncio.to_thread(heart_sensor.update)
+                face_analyzer_update = asyncio.to_thread(face_analyzer.update)
+                
+                # 等待所有感測器數據
+                await asyncio.gather(alcohol_update, heart_update, face_analyzer_update)
+                
+                # 讀取感測器數據
+                alcohol_task = asyncio.to_thread(alcohol_sensor.get_alcohol)
+                heart_task = asyncio.to_thread(heart_sensor.get_average)
+                face_analyzer_task = asyncio.to_thread(face_analyzer.get_fatigue)
+                
+                # 等待所有感測器數據讀取完成
+                data = await asyncio.gather(alcohol_task, heart_task, face_analyzer_task)
+                
+                # 判斷是否超過限制
+                self.monitor(user_id)
+                
+                # 等待1秒後再次監控
+                await asyncio.sleep(1)
+                
+        except KeyboardInterrupt:
+            print("監控任務停止")
+            raise SystemExit
+        except Exception as e:
+            print(f"發生錯誤: {e}")
+            raise e
+
+    def monitor(self,user_id):
+        # 如果酒精濃度超過限制，發送警告消息
+        if alcohol_sensor.is_over_limit():
+            line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
+            print("警告: 酒精濃度過高，請勿駕駛！")
+            
+        # 如果心率異常，發送警告消息
+        if heart_sensor.is_normal():
+            line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
+            print("警告: 心率異常，請注意休息！")
+        
+        # 判斷人臉偵測到疲勞
+        if face_analyzer.is_fatigue():
+            line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
+            print("警告: 人臉偵測到疲勞，請注意休息！")
+            
+        
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+        
 
 # 獲取當前狀態消息
 def get_status_msg():
