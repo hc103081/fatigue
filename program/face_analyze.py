@@ -7,7 +7,7 @@ class FaceAnalyzer:
         if model_path:
             self.load_model(model_path)
             
-    def update():
+    def update(self):
         """
         更新影像分析數據
         """
@@ -26,18 +26,18 @@ class FaceAnalyzer:
         Params:
             image: 圖片
         """
-        if self.model is None:
-            raise ValueError("Model not loaded.")
+        # if self.model is None:
+        #     raise ValueError("Model not loaded.")
         # result = self.model.predict(image)
-        # return result
-        pass
+        result = 0
+        return result        
     
     # 臉部疲勞分析指標
     def get_fatigue(self):
         """
         取得臉部疲勞值
         """
-        result = self.analyze()
+        result = self.analyze(0)
         
         return result
     

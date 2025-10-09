@@ -1,6 +1,4 @@
 import asyncio
-from asyncore import loop
-from cv2 import line
 from alcohol import AlcoholSensor
 from face_analyze import FaceAnalyzer
 from gpio import GPIO
@@ -44,7 +42,7 @@ def main():
             
             # 啟動Line API
             line_api_thread = threading.Thread(target=start_line_Api,
-                            args=(_user_id,)
+                            args=()
                             )
             
             # 啟動並等待

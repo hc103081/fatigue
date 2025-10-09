@@ -20,9 +20,12 @@ async def async_line_Api():
     state_open = True
     
     line_bot_task = asyncio.to_thread(Line_bot.app.run)
-    ngrok_task = asyncio.to_thread(ngrok_start())
+    ngrok_task = asyncio.to_thread(ngrok_start)
     
-    await asyncio.gather(line_bot_task, ngrok_task)
+    try:
+        await asyncio.gather(line_bot_task, ngrok_task)
+    except Exception as e:
+        print(f"An error occurred: {e}")
     
 def start_line_Api():
     """啟動 Line Api"""

@@ -28,10 +28,10 @@ class AlcoholSensor:
         return self.alcohol_level
 
     # 判斷酒精濃度是否超過限制值
-    def is_over_limit(self, limit=0.08):
+    def is_over_limit(self, limit=0.15):
         """
         Params:
-            limit: 酒精濃度限制值，預設為 0.08
+            limit: 酒精濃度限制值
         Returns:
             如果酒精濃度超過 limit 則回傳 True
         """

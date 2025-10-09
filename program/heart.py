@@ -12,7 +12,7 @@ class HeartRateSensor:
         self.data = Queue(30)
         self.threshold_now = 60
 
-    def update():
+    def update(self):
         """
         刷新心率感測器資料。
         """
