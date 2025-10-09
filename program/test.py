@@ -55,7 +55,7 @@ def camera_test():
             break
     # 释放摄像头并关闭所有窗口
     cv2.destroyAllWindows()
-    
+
     
 
 if __name__ == "__main__":
