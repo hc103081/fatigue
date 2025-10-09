@@ -1,3 +1,4 @@
+import re
 from flask import Flask, json, request
 
 # 載入 LINE Message API 相關函式庫
@@ -8,6 +9,9 @@ import requests
 # 設定 LINE Bot 的存取權杖與密鑰
 access_token = 'ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU='
 secret = 'ccb3a53029a0ae2eda6fd90ed07e4fd0'
+
+# 控制發送訊息權限
+status_can_sent_message = False
 
 line_bot_api = LineBotApi(access_token)
 
@@ -52,6 +56,10 @@ class Line_bot:
             user_id: 要傳送訊息的使用者 ID
             message: 要傳送的訊息內容
         """
+        if status_can_sent_message == False:
+            print("控制權未開啟，無法傳送訊息!")
+            return False
+        
         line_bot_api.push_message(user_id, TextSendMessage(text=message))
         
 
