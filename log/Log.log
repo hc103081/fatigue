@@ -1,2 +1,31 @@
-2025-10-10 03:34:41,301 INFO: This is an info message
-2025-10-10 03:34:41,301 DEBUG: This is a debug message
+2025-10-10 04:29:21,339 DEBUG(__init__): Using proactor: IocpProactor
+2025-10-10 04:29:21,340 DEBUG(__init__): Using proactor: IocpProactor
+2025-10-10 04:29:21,353 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:21,353 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:21,366 INFO(_log): [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-10-10 04:29:21,366 INFO(_log): [33mPress CTRL+C to quit[0m
+2025-10-10 04:29:22,364 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="no configuration paths supplied"
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="using configuration at default config path" path=C:\\Users\\hc103\\AppData\\Local/ngrok/ngrok.yml
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="open config file" path=C:\\Users\\hc103\\AppData\\Local\\ngrok\\ngrok.yml err=nil
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="client session established" obj=tunnels.session
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="tunnel session started" obj=tunnels.session
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:21+0800 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://127.0.0.1:5000 url=https://undenunciated-ultrared-neil.ngrok-free.app
+2025-10-10 04:29:22,365 DEBUG(ngrok_start): t=2025-10-10T04:29:22+0800 lvl=info msg="update available" obj=updater
+2025-10-10 04:29:22,368 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:22,368 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:24,398 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:24,398 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:30,434 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:30,434 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:31,437 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:31,437 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:34,458 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:34,458 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:43,544 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:43,544 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:44,550 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:44,550 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！
+2025-10-10 04:29:46,560 INFO(sent_message): 控制權未開啟，無法傳送訊息!
+2025-10-10 04:29:46,561 INFO(monitor): 警告: 酒精濃度過高，請勿駕駛！

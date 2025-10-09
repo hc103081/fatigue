@@ -1,11 +1,12 @@
 import logging
 
 class Log:
-    FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+    FORMAT = '%(asctime)s %(levelname)s(%(funcName)s): %(message)s'
     logging.basicConfig(level=logging.DEBUG, 
                         filename='C:/VsCode/build/fatigue/log/Log.log', 
                         filemode='w', 
-                        format=FORMAT)
+                        format=FORMAT, 
+                        encoding='utf-8')
     logger = logging.getLogger()
     
     def __init__(self):
