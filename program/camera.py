@@ -42,6 +42,7 @@ class Camera:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ 退出 with 語句時自動關閉攝像頭 """
         self.close()
+        print("攝像頭已關閉")
         if exc_type is not None:
             print(exc_type, exc_val, exc_tb)
             return False  # 攔截例外並回傳 False

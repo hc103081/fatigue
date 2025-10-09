@@ -2,7 +2,7 @@ from cv2 import line
 from ngrok import ngrok_start
 from line_bot import Line_bot
 import asyncio
-
+import threading
 
 # 設定 LINE Api 的啟用狀態
 state_open = False
@@ -14,22 +14,20 @@ def is_line_Api_open():
     """回傳 Line Api,Line bot 啟用狀態"""
     return state_open
 
-async def start_line_Api():
+async def async_line_Api():
     """非同步函式，啟動 ngrok 與 Flask"""
     global state_open
     state_open = True
     
-    loop = asyncio.get_event_loop()
-    
-    ngrok_task = loop.run_in_executor(None, ngrok_start())
+    loop = asyncio.new_event_loop()
+       
     line_bot_task = loop.run_in_executor(None, Line_bot.app.run)
-    try:
-        results = await asyncio.gather(ngrok_task, line_bot_task)
-    except Exception as e:
-        print(e)
-        state_open = False
+    ngrok_task = loop.run_in_executor(None, ngrok_start())
+    await asyncio.gather(line_bot_task, ngrok_task)
     
-    return results
+def start_line_Api():
+    """啟動 Line Api"""
+    asyncio.run(async_line_Api())
     
 def input_line_message():
     """
@@ -39,5 +37,8 @@ def input_line_message():
         message = input("Enter message to send: ")
         print(Line_bot.sent_message(user_id, message))
 
+
 if __name__ == "__main__":
-    asyncio.run(start_line_Api())
+    t1 = threading.Thread(target=start_line_Api)
+    t1.start()
+    t1.join()

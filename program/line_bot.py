@@ -4,7 +4,6 @@ from flask import Flask, json, request
 # 載入 LINE Message API 相關函式庫
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import TextSendMessage
-import requests
 
 # 設定 LINE Bot 的存取權杖與密鑰
 access_token = 'ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU='
@@ -38,11 +37,11 @@ class Line_bot:
             if type == 'text':
                 # 取得 LINE 收到的文字訊息
                 msg = json_data['events'][0]['message']['text']
-                print(msg)                                       # 印出內容
+                print(f'收到: {msg}')                                       # 印出內容
                 reply = msg
             else:
                 reply = '你傳的不是文字呦～'
-            print(reply)
+            print(f'reply: {reply}')
             line_bot_api.reply_message(tk, TextSendMessage(reply))  # 回傳訊息
         except Exception as e:
             # 如果發生錯誤，印出收到的內容
