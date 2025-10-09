@@ -2,6 +2,7 @@ import subprocess
 import shlex
 import time
 import signal
+from logs import Log
 
 
 def ngrok_start():
@@ -24,25 +25,25 @@ def ngrok_start():
         text=True
     )
 
-    print("ngrok started, PID:", proc.pid)
+    Log.logger.debug("ngrok started, PID:", proc.pid)
 
     # 監看輸出並印出前幾行以取得 public url（ngrok 會在 stdout 輸出啟動資訊）
     
     try:
         time.sleep(1)  # 等待 ngrok 啟動
         for line in proc.stdout:
-            print(line.strip())
+            Log.logger.debug(line.strip())
             # 可在此以簡單字串解析 public url，例如匹配 "Forwarding
             if "Forwarding" in line and "http" in line:
-                print("可能的 tunnel 行: ", line.strip())
+                Log.logger.debug("可能的 tunnel 行: ", line.strip())
     except KeyboardInterrupt:
         proc.send_signal(signal.SIGINT)
         proc.wait()
-        print("ngrok terminated")
+        Log.logger.warning("ngrok terminated")
     finally:
         proc.terminate()
         proc.wait()
-        print("ngrok end")
+        Log.logger.debug("ngrok end")
 
 if __name__ == "__main__":
     ngrok_start()

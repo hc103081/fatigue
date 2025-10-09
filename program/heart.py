@@ -1,4 +1,6 @@
 from queue import Queue
+from logs import Log
+
 
 class HeartRateSensor:
     

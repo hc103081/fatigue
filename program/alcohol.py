@@ -1,4 +1,5 @@
 import random
+from logs import Log
 
 class AlcoholSensor:
     """

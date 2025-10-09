@@ -7,10 +7,13 @@ class Log:
                         filemode='w', 
                         format=FORMAT)
     logger = logging.getLogger()
+    
+    def __init__(self):
+        return None
         
         
 
 if __name__ == '__main__':
     log = Log()
     log.logger.info('This is an info message')
-    log.logger.debug('This is a debug message')
+    log.logger.warning('This is a debug message')

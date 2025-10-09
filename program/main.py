@@ -8,6 +8,7 @@ import threading
 import time
 from line_Api import start_line_Api
 from line_bot import Line_bot
+from logs import Log
 
 # Line用戶端user_id
 _user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'  
@@ -20,7 +21,6 @@ end_time = 20
 
 def main():
     global line_bot
-    
     # 設置GPIO模式
     GPIO.setmode(GPIO.BCM)
     
@@ -55,7 +55,7 @@ def main():
             line_api_thread.join()
 
     except Exception as e:
-        print(f"發生錯誤: {e}")
+        Log.logger.warning(f"發生錯誤: {e}")
 
 class Monitor():
     def __init__(self):
@@ -74,7 +74,7 @@ class Monitor():
             face_analyzer = FaceAnalyzer()
         
         except Exception as e:
-            print(f"發生錯誤: {e}")
+            Log.logger.warning(f"發生錯誤: {e}")
             raise e
     
 
@@ -114,27 +114,27 @@ class Monitor():
                 await asyncio.sleep(1)
                 
         except KeyboardInterrupt:
-            print("監控任務停止")
+            Log.logger.debug("監控任務停止")
             raise SystemExit
         except Exception as e:
-            print(f"發生錯誤: {e}")
+            Log.logger.warning(f"發生錯誤: {e}")
             raise e
 
     def monitor(self,user_id):
         # 如果酒精濃度超過限制，發送警告消息
         if alcohol_sensor.is_over_limit():
             line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
-            print("警告: 酒精濃度過高，請勿駕駛！")
+            Log.logger.info("警告: 酒精濃度過高，請勿駕駛！")
             
         # 如果心率異常，發送警告消息
         if heart_sensor.is_normal():
             line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
-            print("警告: 心率異常，請注意休息！")
+            Log.logger.info("警告: 心率異常，請注意休息！")
         
         # 判斷人臉偵測到疲勞
         if face_analyzer.is_fatigue():
             line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
-            print("警告: 人臉偵測到疲勞，請注意休息！")
+            Log.logger.info("警告: 人臉偵測到疲勞，請注意休息！")
             
         
     def __enter__(self):

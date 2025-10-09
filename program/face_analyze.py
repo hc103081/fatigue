@@ -1,4 +1,6 @@
 from camera import Camera
+from logs import Log
+
 
 class FaceAnalyzer:
     

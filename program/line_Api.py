@@ -3,6 +3,7 @@ from ngrok import ngrok_start
 from line_bot import Line_bot
 import asyncio
 import threading
+from logs import Log
 
 # 設定 LINE Api 的啟用狀態
 state_open = False
@@ -25,7 +26,7 @@ async def async_line_Api():
     try:
         await asyncio.gather(line_bot_task, ngrok_task)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        Log.logger.warning(f"An error occurred: {e}")
     
 def start_line_Api():
     """啟動 Line Api"""

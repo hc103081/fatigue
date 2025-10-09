@@ -1,3 +1,5 @@
+from logs import Log
+
 
 # Line測試
 def line_test():

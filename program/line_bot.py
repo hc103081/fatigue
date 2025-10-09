@@ -1,5 +1,7 @@
 import re
 from flask import Flask, json, request
+from logs import Log
+
 
 # 載入 LINE Message API 相關函式庫
 from linebot import LineBotApi, WebhookHandler
@@ -37,15 +39,15 @@ class Line_bot:
             if type == 'text':
                 # 取得 LINE 收到的文字訊息
                 msg = json_data['events'][0]['message']['text']
-                print(f'收到: {msg}')                                       # 印出內容
+                Log.logger.debug(f'收到: {msg}')                                       # 印出內容
                 reply = msg
             else:
                 reply = '你傳的不是文字呦～'
-            print(f'reply: {reply}')
+            Log.logger.debug(f'reply: {reply}')
             line_bot_api.reply_message(tk, TextSendMessage(reply))  # 回傳訊息
         except Exception as e:
             # 如果發生錯誤，印出收到的內容
-            print(f"{body}+\n\n{e}")
+            Log.logger.warning(f"{body}+\n\n{e}")
         return 'OK'                                              # 驗證 Webhook 使用，不能省略
 
     # 傳送訊息給指定使用者
@@ -56,7 +58,7 @@ class Line_bot:
             message: 要傳送的訊息內容
         """
         if status_can_sent_message == False:
-            print("控制權未開啟，無法傳送訊息!")
+            Log.logger.info("控制權未開啟，無法傳送訊息!")
             return False
         
         line_bot_api.push_message(user_id, TextSendMessage(text=message))
