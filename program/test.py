@@ -59,6 +59,7 @@ def camera_test():
 
 
 def camera_test_asnyc():
+    
     pass
     
 
