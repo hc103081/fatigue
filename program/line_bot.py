@@ -9,10 +9,7 @@ import requests
 access_token = 'ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU='
 secret = 'ccb3a53029a0ae2eda6fd90ed07e4fd0'
 
-
-
 line_bot_api = LineBotApi(access_token)
-
 
 class Line_bot:
     """自訂 Line Bot 類別"""

@@ -6,6 +6,7 @@ from face_analyze import FaceAnalyzer
 import threading
 import time
 from line_bot import Line_bot
+from line_Api import start_line_Api
 import schedule
 
 # Line用戶端user_id
@@ -21,18 +22,6 @@ def main():
 
     # 設置GPIO模式
     GPIO.setmode(GPIO.BCM)
-    
-    # 初始化攝像頭、感測器、GPIO
-    global heart_sensor
-    heart_sensor = HeartRateSensor()
-    global alcohol_sensor
-    alcohol_sensor = AlcoholSensor(0)
-    global face_analyzer
-    face_analyzer = FaceAnalyzer()
-    
-    # 初始化Line_bot
-    global line_bot
-    line_bot = Line_bot()
 
     # 主程式循環
     try:
@@ -48,11 +37,10 @@ def main():
 
     except Exception as e:
         print(f"發生錯誤: {e}")
-    
-        
 
 # 監控感測器數據並發送警告消息
 def monitor(user_id):
+    
     try:
         while True:
             # 如果酒精濃度超過限制，發送警告消息
@@ -71,7 +59,7 @@ def monitor(user_id):
             if face_analyzer.is_fatigue():
                 # line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
                 print("警告: 人臉偵測到疲勞，請注意休息！")
-                time.sleep(10000)
+                time.sleep(10000) 
                 
             time.sleep(1000)
     
@@ -84,8 +72,6 @@ def monitor(user_id):
 
 # 獲取當前狀態消息
 def get_status_msg():
-    # 脸部特徵分析
-    face_analyzer = FaceAnalyzer()
 
     # 生成感測
     heart_rate = heart_sensor.get_latest()
@@ -109,6 +95,7 @@ def set_scheduled(user_id):
 # 向Line用戶端發送消息
 def send_message(user_id):
     line_bot.sent_message(user_id, get_status_msg())
+
 
 if __name__ == "__main__":
     main()
