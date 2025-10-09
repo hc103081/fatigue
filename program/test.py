@@ -56,7 +56,17 @@ def camera_test():
     # 释放摄像头并关闭所有窗口
     cv2.destroyAllWindows()
     
+
+
+def camera_test_asnyc():
+    pass
     
+
+def test_asnyc():
+    pass
+
+
+
 
 if __name__ == "__main__":
     pass
