@@ -1,13 +1,16 @@
 
+# Line測試
 def line_test():
     from line_bot import Line_bot
 
     line_bot = Line_bot()
-    id = 'U44a5e3e3cf9c8835a64bb1273b08f457'
-    for i in range(5):
-        line_bot.sent_message(id,'gay')
+    id = ['Uc588694833df79cafd6d19b3c2f505af',
+          'U44a5e3e3cf9c8835a64bb1273b08f457']
+    
+    for i in range(1):
+        line_bot.sent_message(id[0],'gay')
         
-# 測試程式
+# gpio測試
 def gpio_test():
     try:
         import RPi.GPIO as GPIO     # type: ignore
@@ -39,32 +42,28 @@ def gpio_test():
         GPIO.cleanup()               # 清理 GPIO 狀態
     print("end")
     
+# 相機測試
 def camera_test():
     from camera import Camera
     import cv2
-    
-    camera = Camera()
-    while True:
-        # 从摄像头读取一帧
-        frame = camera.get_frame()
         
-        # 显示帧
-        cv2.imshow('摄像头画面', frame)
-        # 按下 'q' 键退出循环
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    # 释放摄像头并关闭所有窗口
-    cv2.destroyAllWindows()
-<<<<<<< HEAD
+    with Camera() as camera:
+        while True:
 
-=======
+            # 从摄像头读取一帧
+            frame = camera.get_frame()
+            
+            # 显示帧
+            cv2.imshow('摄像头画面', frame)
+            # 按下 'q' 键退出循环
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
     
 
 
 def camera_test_asnyc():
-    
     pass
->>>>>>> main
+    
     
 
 def test_asnyc():
@@ -74,6 +73,8 @@ def test_asnyc():
 
 
 if __name__ == "__main__":
+    line_test()
+    # camera_test()
     pass
     
 
