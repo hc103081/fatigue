@@ -25,7 +25,7 @@ def ngrok_start():
         text=True
     )
 
-    Log.logger.debug("ngrok started, PID:", proc.pid)
+    Log.logger.debug(f'ngrok started, PID: {proc.pid}')
 
     # 監看輸出並印出前幾行以取得 public url（ngrok 會在 stdout 輸出啟動資訊）
     
