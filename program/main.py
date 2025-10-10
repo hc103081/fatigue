@@ -108,7 +108,7 @@ class Monitor():
                 data = await asyncio.gather(alcohol_task, heart_task, face_analyzer_task)
                 
                 # 判斷是否超過限制
-                self.monitor(user_id)
+                self.review(user_id)
                 
                 # 等待1秒後再次監控
                 await asyncio.sleep(1)
@@ -120,7 +120,7 @@ class Monitor():
             Log.logger.warning(f"發生錯誤: {e}")
             raise e
 
-    def monitor(self,user_id):
+    def review(self,user_id):
         # 如果酒精濃度超過限制，發送警告消息
         if self.alcohol_sensor.is_over_limit():
             line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
