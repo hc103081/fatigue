@@ -2,9 +2,14 @@ from camera import Camera
 from logs import Log
 
 
-class FaceAnalyzer:
+class FaceAnalyzer(Camera):
+    """臉部分析模組"""
     
     def __init__(self, model_path=None):
+        """
+        初始化臉部分析器
+        """
+        super().__init__()
         self.model = None
         if model_path:
             self.load_model(model_path)
@@ -56,6 +61,7 @@ class FaceAnalyzer:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        super().__exit__(exc_type, exc_val, exc_tb)
         pass
     
     

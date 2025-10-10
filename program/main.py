@@ -63,15 +63,15 @@ class Monitor():
         初始化套件
         """
         try:
-            global alcohol_sensor,heart_sensor,face_analyzer
+            # 啟動人臉分析器
+            self.face_analyzer = FaceAnalyzer()
+            
             # 啟動酒精感測器
-            alcohol_sensor = AlcoholSensor(1)
+            self.alcohol_sensor = AlcoholSensor(1)
             
             # 啟動心率感測器
-            heart_sensor = HeartRateSensor()
+            self.heart_sensor = HeartRateSensor()
             
-            # 啟動人臉偵測器
-            face_analyzer = FaceAnalyzer()
         
         except Exception as e:
             Log.logger.warning(f"發生錯誤: {e}")
@@ -92,17 +92,17 @@ class Monitor():
         try:
             while True:
                 # 刷新所有數據
-                alcohol_update = asyncio.to_thread(alcohol_sensor.update)
-                heart_update = asyncio.to_thread(heart_sensor.update)
-                face_analyzer_update = asyncio.to_thread(face_analyzer.update)
+                alcohol_update = asyncio.to_thread(self.alcohol_sensor.update)
+                heart_update = asyncio.to_thread(self.heart_sensor.update)
+                face_analyzer_update = asyncio.to_thread(self.face_analyzer.update)
                 
                 # 等待所有感測器數據
                 await asyncio.gather(alcohol_update, heart_update, face_analyzer_update)
                 
                 # 讀取感測器數據
-                alcohol_task = asyncio.to_thread(alcohol_sensor.get_alcohol)
-                heart_task = asyncio.to_thread(heart_sensor.get_average)
-                face_analyzer_task = asyncio.to_thread(face_analyzer.get_fatigue)
+                alcohol_task = asyncio.to_thread(self.alcohol_sensor.get_alcohol)
+                heart_task = asyncio.to_thread(self.heart_sensor.get_average)
+                face_analyzer_task = asyncio.to_thread(self.face_analyzer.get_fatigue)
                 
                 # 等待所有感測器數據讀取完成
                 data = await asyncio.gather(alcohol_task, heart_task, face_analyzer_task)
@@ -122,38 +122,42 @@ class Monitor():
 
     def monitor(self,user_id):
         # 如果酒精濃度超過限制，發送警告消息
-        if alcohol_sensor.is_over_limit():
+        if self.alcohol_sensor.is_over_limit():
             line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
             Log.logger.info("警告: 酒精濃度過高，請勿駕駛！")
             
         # 如果心率異常，發送警告消息
-        if heart_sensor.is_normal():
+        if self.heart_sensor.is_normal():
             line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
             Log.logger.info("警告: 心率異常，請注意休息！")
         
         # 判斷人臉偵測到疲勞
-        if face_analyzer.is_fatigue():
+        if self.face_analyzer.is_fatigue():
             line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
             Log.logger.info("警告: 人臉偵測到疲勞，請注意休息！")
             
+    # 獲取當前狀態消息
+    def get_status_msg(self):
+
+        # 生成感測
+        heart_rate = self.heart_sensor.get_latest()
+        alcohol_level = self.alcohol_sensor.get_alcohol()
+
+        # 狀態判斷
+        status_msg = f"疲倦:, 心率:{heart_rate}, 酒精:{alcohol_level}"
+        return status_msg
         
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.face_analyzer.__exit__(exc_type, exc_val, exc_tb)
+        self.alcohol_sensor.__exit__(exc_type, exc_val, exc_tb)
+        self.heart_sensor.__exit__(exc_type, exc_val, exc_tb)
         pass
         
 
-# 獲取當前狀態消息
-def get_status_msg():
-
-    # 生成感測
-    heart_rate = heart_sensor.get_latest()
-    alcohol_level = alcohol_sensor.get_alcohol()
-
-    # 狀態判斷
-    status_msg = f"疲倦:, 心率:{heart_rate}, 酒精:{alcohol_level}"
-    return status_msg
+    
 
 # 設置定時任務
 def set_scheduled(user_id):
@@ -161,14 +165,12 @@ def set_scheduled(user_id):
     while True:
         # 取得當地時間
         time_now = time.localtime().tm_hour
-        
-        
-            
+
         time.sleep(1000)
 
 # 向Line用戶端發送消息
 def send_message(user_id):
-    line_bot.sent_message(user_id, get_status_msg())
+    line_bot.sent_message(user_id, Monitor.get_status_msg())
 
 
 if __name__ == "__main__":

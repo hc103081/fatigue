@@ -42,3 +42,9 @@ class AlcoholSensor:
     def reset(self):
         """ 重置酒精濃度值 """
         self.alcohol_level = 0.0
+        
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass

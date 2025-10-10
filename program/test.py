@@ -46,14 +46,15 @@ def gpio_test():
     
 # 相機測試
 def camera_test():
+    from face_analyze import FaceAnalyzer
     from camera import Camera
     import cv2
         
-    with Camera() as camera:
+    with FaceAnalyzer() as face_analyzer:
         while True:
 
             # 从摄像头读取一帧
-            frame = camera.get_frame()
+            frame = face_analyzer.get_frame()
             
             # 显示帧
             cv2.imshow('摄像头画面', frame)
@@ -75,8 +76,8 @@ def test_asnyc():
 
 
 if __name__ == "__main__":
-    line_test()
-    # camera_test()
+    # line_test()
+    camera_test()
     pass
     
 
