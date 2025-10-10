@@ -62,22 +62,57 @@ def camera_test():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     
-
-
-def camera_test_asnyc():
+def face_analyze_test2():
     pass
     
+def face_analyze_test():
+    from face_analyze import FaceAnalyzer
+    import cv2
     
+    # 初始化追蹤器
+    tracker = cv2.TrackerKCF_create()
+    tracking = False
+    
+    with FaceAnalyzer() as face_analyzer:
+        while True:
+            frame = face_analyzer.get_frame()
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            equa = cv2.equalizeHist(gray)
+            faces = face_analyzer.detector(equa)
+            
+            for face in faces:
+                shape = face_analyzer.predictor(equa, face)
+                score = face_analyzer.get_fatigue_score(shape)
+                fatigue = face_analyzer.is_fatigued(score)
+                
+                # 畫左眼 (特徵點 36–41)
+                for i in range(36, 42):
+                    x, y = shape.part(i).x, shape.part(i).y
+                    cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
-def test_asnyc():
-    pass
+                # 畫右眼 (特徵點 42–47)
+                for i in range(42, 48):
+                    x, y = shape.part(i).x, shape.part(i).y
+                    cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
+                # 畫嘴巴 (特徵點 48–67)
+                for i in range(48, 68):
+                    x, y = shape.part(i).x, shape.part(i).y
+                    cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
 
-
+                # 顯示結果W
+                text = f"Fatigue Score: {score:.2f} | Fatigued: {fatigue}"
+                cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if fatigue else (0, 255, 0), 2)
+                
+                
+            cv2.imshow("Fatigue Detection", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
 if __name__ == "__main__":
     # line_test()
-    camera_test()
+    # camera_test()
+    face_analyze_test()
     pass
     
 

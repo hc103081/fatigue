@@ -9,6 +9,7 @@ import time
 from line_Api import start_line_Api
 from line_bot import Line_bot
 from logs import Log
+import multiprocessing
 
 # Line用戶端user_id
 _user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'  
@@ -83,18 +84,20 @@ class Monitor():
         """
         啟用感測器與監控
         """
-        asyncio.run(self.asnyc_monitor(user_id))
+        asyncio.run(self.async_monitor(user_id))
 
-    async def asnyc_monitor(self,user_id):
+    async def async_monitor(self,user_id):
         """
         監控感測器數據並發送警告消息
         """
         try:
             while True:
+                loop = asyncio.get_event_loop()
+                
                 # 刷新所有數據
                 alcohol_update = asyncio.to_thread(self.alcohol_sensor.update)
                 heart_update = asyncio.to_thread(self.heart_sensor.update)
-                face_analyzer_update = asyncio.to_thread(self.face_analyzer.update)
+                face_analyzer_update = loop.run_in_executor(None, self.face_analyzer.update)
                 
                 # 等待所有感測器數據
                 await asyncio.gather(alcohol_update, heart_update, face_analyzer_update)
@@ -132,7 +135,7 @@ class Monitor():
             Log.logger.info("警告: 心率異常，請注意休息！")
         
         # 判斷人臉偵測到疲勞
-        if self.face_analyzer.is_fatigue():
+        if self.face_analyzer.is_fatigued():
             line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
             Log.logger.info("警告: 人臉偵測到疲勞，請注意休息！")
             
