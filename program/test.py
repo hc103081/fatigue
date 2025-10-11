@@ -62,6 +62,16 @@ def camera_test():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     
+def face_analyze_test3():
+    from face_analyze import FaceAnalyzer
+    import cv2
+    
+    with FaceAnalyzer() as face_analyzer:
+        while True:
+            face_analyzer.update()
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    
 def face_analyze_test2():
     from face_analyze import FaceAnalyzer
     import cv2
@@ -104,7 +114,8 @@ def face_analyze_test():
             for face in faces:
                 # 偵測特徵點
                 shape = face_analyzer.predictor(equa, face)
-                score = face_analyzer.get_fatigue_score(shape)
+                face_analyzer.set_landmarks_points(shape)
+                score = face_analyzer.get_fatigue_score()
                 fatigue = face_analyzer.is_fatigued(score)
                 
                 # 畫左眼 (特徵點 36–41)
@@ -134,7 +145,7 @@ def face_analyze_test():
 if __name__ == "__main__":
     # line_test()
     # camera_test()
-    face_analyze_test2()
+    face_analyze_test3()
     pass
     
 

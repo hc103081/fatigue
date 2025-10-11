@@ -18,6 +18,16 @@ class FaceAnalyzer(Camera):
         
         # 需下載此模型
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks_GTX.dat") 
+        
+        # 疲勞值
+        self.fatigue_score = 0.0
+        
+        # 眼睛縱橫比 EAR
+        self.ear = 0.0
+        
+        # 嘴巴張開比 MAR
+        self.mar = 0.0
+        
 
     def show(self):
         """
@@ -56,7 +66,8 @@ class FaceAnalyzer(Camera):
         
         for face in faces:
             shape = self.predictor(equa, face)
-            score = self.get_fatigue_score(shape)
+            self.set_landmarks_points(shape)
+            score = self.get_fatigue_score()
             fatigue = self.is_fatigued(score)
             
             # 畫左眼 (特徵點 36–41)
@@ -98,23 +109,26 @@ class FaceAnalyzer(Camera):
         mar = (A + B) / (2.0 * C)
         return mar
 
-    # 回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
-    def get_fatigue_score(self,landmarks):
+    def set_landmarks_points(self,landmarks):
         left_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(36, 42)])
         right_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(42, 48)])
         mouth = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(48, 68)])
 
-        ear = (self.compute_ear(left_eye) + self.compute_ear(right_eye)) / 2.0
-        mar = self.compute_mar(mouth)
+        self.ear = (self.compute_ear(left_eye) + self.compute_ear(right_eye)) / 2.0
+        self.mar = self.compute_mar(mouth)
+        return left_eye, right_eye, mouth
 
+    # 回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
+    def get_fatigue_score(self):
         # 疲勞值公式：MAR - EAR（可依需求調整權重）
-        fatigue_score = mar - ear
-        
+        fatigue_score = self.mar - self.ear
+        self.fatigue_score = fatigue_score
         return fatigue_score
 
     # 回傳是否疲勞（根據疲勞值是否超過閾值）
-    def is_fatigued(self,fatigue_score, threshold=0):
-        return (fatigue_score > threshold)
+    def is_fatigued(self, threshold=0):
+        self.fatigue_score = self.get_fatigue_score()
+        return (self.fatigue_score > threshold)
         
         
     def __enter__(self):

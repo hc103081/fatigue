@@ -63,6 +63,15 @@ class Monitor():
         """
         初始化套件
         """
+        # 判斷冷卻時間
+        self.cd = 0.0
+        
+        # 冷卻時間上限
+        self.cd_time_max = 1.0
+        
+        # 上次觸發時間
+        self.last_trigger_time = None
+        
         try:
             # 啟動人臉分析器
             self.face_analyzer = FaceAnalyzer()
@@ -100,21 +109,21 @@ class Monitor():
                 face_analyzer_update = loop.run_in_executor(None, self.face_analyzer.update)
                 
                 # 等待所有感測器數據
-                await asyncio.gather(alcohol_update, heart_update, face_analyzer_update)
+                # await asyncio.gather(alcohol_update, heart_update, face_analyzer_update)
                 
                 # 讀取感測器數據
                 alcohol_task = asyncio.to_thread(self.alcohol_sensor.get_alcohol)
                 heart_task = asyncio.to_thread(self.heart_sensor.get_average)
-                face_analyzer_task = asyncio.to_thread(self.face_analyzer.get_fatigue)
+                face_analyzer_task = asyncio.to_thread(self.face_analyzer.get_fatigue_score)
                 
                 # 等待所有感測器數據讀取完成
-                data = await asyncio.gather(alcohol_task, heart_task, face_analyzer_task)
+                # data = await asyncio.gather(alcohol_task, heart_task, face_analyzer_task)
                 
                 # 判斷是否超過限制
                 self.review(user_id)
                 
-                # 等待1秒後再次監控
-                await asyncio.sleep(1)
+                # 等待n秒後再次監控
+                # await asyncio.sleep(0.1)
                 
         except KeyboardInterrupt:
             Log.logger.debug("監控任務停止")
@@ -124,6 +133,12 @@ class Monitor():
             raise e
 
     def review(self,user_id):
+        # 判斷是否再在冷卻
+        if self.is_in_cd():
+            return 
+        else:
+            self.last_trigger_time = time.time()
+        
         # 如果酒精濃度超過限制，發送警告消息
         if self.alcohol_sensor.is_over_limit():
             line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
@@ -138,6 +153,15 @@ class Monitor():
         if self.face_analyzer.is_fatigued():
             line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
             Log.logger.info("警告: 人臉偵測到疲勞，請注意休息！")
+    
+    def is_in_cd(self):
+        now = time.time()
+    
+        # 判斷是否在冷卻時間內
+        if self.last_trigger_time is None:
+            return False  
+        
+        return (now - self.last_trigger_time) < self.cd_time_max  # 冷卻中
             
     # 獲取當前狀態消息
     def get_status_msg(self):

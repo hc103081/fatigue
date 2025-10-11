@@ -25,7 +25,7 @@ class AlcoholSensor:
         Returns:
             回傳模擬的酒精濃度值
         """
-        self.alcohol_level = round(random.uniform(0.0, 0.2), 3)
+        self.alcohol_level = round(random.uniform(0.0, 0.1), 3)
         return self.alcohol_level
 
     # 判斷酒精濃度是否超過限制值
