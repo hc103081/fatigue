@@ -18,7 +18,7 @@ class HeartRateSensor:
         """
         刷新心率感測器資料。
         """
-        pass
+        return True
     
     # 新增一次心率讀數
     def add_reading(self, bpm):

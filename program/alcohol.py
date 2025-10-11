@@ -17,7 +17,7 @@ class AlcoholSensor:
         """
         更新感測器資料
         """
-        pass
+        return True
     
     # 取得模擬的酒精濃度值
     def get_alcohol(self):

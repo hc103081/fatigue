@@ -2,6 +2,7 @@ from camera import Camera
 from logs import Log
 import dlib
 import numpy as np
+import cv2
 
 class FaceAnalyzer(Camera):
     """臉部分析模組"""
@@ -18,12 +19,68 @@ class FaceAnalyzer(Camera):
         # 需下載此模型
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks_GTX.dat") 
 
+    def show(self):
+        """
+        顯示影像
+        """
+        frame = self.get_frame()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        equa = cv2.equalizeHist(gray)
+        face_rects = self.detector(equa,0)
+        
+
+        # 取出所有偵測的結果
+        for i, d in enumerate(face_rects):
+            x1 = d.left()
+            y1 = d.top()
+            x2 = d.right()
+            y2 = d.bottom()
+
+            # 以方框標示偵測的人臉
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
+
+        # 顯示結果
+        cv2.imshow("Face Detection", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            pass
             
     def update(self):
         """
         更新影像分析數據
         """
-        pass
+        frame = self.get_frame()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        equa = cv2.equalizeHist(gray)
+        faces = self.detector(equa)
+        
+        for face in faces:
+            shape = self.predictor(equa, face)
+            score = self.get_fatigue_score(shape)
+            fatigue = self.is_fatigued(score)
+            
+            # 畫左眼 (特徵點 36–41)
+            for i in range(36, 42):
+                x, y = shape.part(i).x, shape.part(i).y
+                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
+
+            # 畫右眼 (特徵點 42–47)
+            for i in range(42, 48):
+                x, y = shape.part(i).x, shape.part(i).y
+                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
+
+            # 畫嘴巴 (特徵點 48–67)
+            for i in range(48, 68):
+                x, y = shape.part(i).x, shape.part(i).y
+                cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
+
+            # 顯示結果W
+            text = f"Fatigue Score: {score:.2f} | Fatigued: {fatigue}"
+            cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if fatigue else (0, 255, 0), 2)
+        cv2.imshow("Fatigue Detection", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            pass
+        return True
     
    # 計算眼睛縱橫比 EAR
     def compute_ear(self,eye_points):

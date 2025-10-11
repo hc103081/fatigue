@@ -63,24 +63,46 @@ def camera_test():
                 break
     
 def face_analyze_test2():
-    pass
-    
-def face_analyze_test():
     from face_analyze import FaceAnalyzer
     import cv2
-    
-    # 初始化追蹤器
-    tracker = cv2.TrackerKCF_create()
-    tracking = False
     
     with FaceAnalyzer() as face_analyzer:
         while True:
             frame = face_analyzer.get_frame()
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             equa = cv2.equalizeHist(gray)
+            faces = face_analyzer.detector(equa,0)
+            
+            # 取出所有偵測的結果
+            for i, d in enumerate(faces):
+                x1 = d.left()
+                y1 = d.top()
+                x2 = d.right()
+                y2 = d.bottom()
+
+                # 以方框標示偵測的人臉
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
+                    
+            cv2.imshow("Fatigue Detection", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+    
+def face_analyze_test():
+    from face_analyze import FaceAnalyzer
+    import cv2
+    
+    with FaceAnalyzer() as face_analyzer:
+        while True:
+            # 取得畫面並進行處理
+            frame = face_analyzer.get_frame()
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            equa = cv2.equalizeHist(gray)
+            
+            # 偵測人臉
             faces = face_analyzer.detector(equa)
             
             for face in faces:
+                # 偵測特徵點
                 shape = face_analyzer.predictor(equa, face)
                 score = face_analyzer.get_fatigue_score(shape)
                 fatigue = face_analyzer.is_fatigued(score)
@@ -112,7 +134,7 @@ def face_analyze_test():
 if __name__ == "__main__":
     # line_test()
     # camera_test()
-    face_analyze_test()
+    face_analyze_test2()
     pass
     
 
