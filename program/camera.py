@@ -1,3 +1,4 @@
+import time
 import cv2
 from logs import Log
 
@@ -11,6 +12,11 @@ class Camera:
             camera_index: 攝像頭索引 預設為 0      
         """
         self.camera_index = camera_index
+        self.last_log_time = 0  # 新增：記錄上一次 log 的時間
+        
+        # 記錄日志的時間間隔，單位：秒
+        self.log_interval = 10  
+
         try:
             self.cap = cv2.VideoCapture(camera_index)  # 初始化攝像頭
             
@@ -26,6 +32,11 @@ class Camera:
         """
         ret, frame = self.cap.read()
         if not ret:
+            now = time.time()
+            # 只在超過 log_interval 秒才記錄
+            if now - self.last_log_time > self.log_interval:
+                Log.logger.warning("未取得影像 frame，跳過分析")
+                self.last_log_time = now
             return None
         return frame
     

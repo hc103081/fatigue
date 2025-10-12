@@ -3,8 +3,7 @@ from logs import Log
 
 
 class HeartRateSensor:
-    
-    def __init__(self):
+    def __init__(self, use_mock=False):
         """
         HeartRateSensor 類用於管理心率感測器的讀數，並提供新增、查詢、計算平均值及判斷異常等功能。\n
         bpm: 心率讀數（每分鐘心跳次數），用於 add_reading 方法。\n
@@ -13,11 +12,20 @@ class HeartRateSensor:
         """
         self.data = Queue(30)
         self.threshold_now = 60
+        self.use_mock = use_mock
+        self.is_test_data = use_mock  # 新增，根據 use_mock 判斷是否為測試資料
 
     def update(self):
         """
         刷新心率感測器資料。
         """
+        if self.use_mock:
+            import random
+            mock_bpm = random.randint(70, 110)
+            self.add_reading(mock_bpm)
+        else:
+            # 這裡放真實感測器資料刷新邏輯
+            pass
         return True
     
     # 新增一次心率讀數
@@ -69,4 +77,3 @@ class HeartRateSensor:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-    

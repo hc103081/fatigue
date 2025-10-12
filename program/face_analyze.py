@@ -1,3 +1,4 @@
+import time
 from camera import Camera
 from logs import Log
 import dlib
@@ -19,6 +20,9 @@ class FaceAnalyzer(Camera):
         # 需下載此模型
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks_GTX.dat") 
         
+        # 記錄日志的時間間隔，單位：秒
+        self.log_interval = 10  
+        
         # 疲勞值
         self.fatigue_score = 0.0
         
@@ -34,6 +38,9 @@ class FaceAnalyzer(Camera):
         顯示影像
         """
         frame = self.get_frame()
+        if frame is None:
+            Log.logger.warning("未取得影像 frame，跳過顯示")
+            return
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         equa = cv2.equalizeHist(gray)
         face_rects = self.detector(equa,0)
@@ -60,6 +67,14 @@ class FaceAnalyzer(Camera):
         更新影像分析數據
         """
         frame = self.get_frame()
+        if frame is None:
+            now = time.time()
+             
+            # 只在超過 log_interval 秒才記錄
+            if now - self.last_log_time > self.log_interval:  
+                Log.logger.warning("未取得影像 frame，跳過分析")
+                self.last_log_time = now
+            return False
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         equa = cv2.equalizeHist(gray)
         faces = self.detector(equa)
@@ -137,5 +152,3 @@ class FaceAnalyzer(Camera):
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
         pass
-    
-    

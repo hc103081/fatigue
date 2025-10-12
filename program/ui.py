@@ -15,6 +15,8 @@ class FatigueMonitorUI:
         self.init_sensors()
         self.create_ui()
         self.start_update_thread()
+        self.warning_active = False  # 新增警告狀態 flag
+
 
     def setup_window(self):
         """设置窗口基本属性"""
@@ -25,9 +27,16 @@ class FatigueMonitorUI:
 
     def init_sensors(self):
         """初始化传感器"""
+        # 這裡可以根據是否有硬體自動判斷 use_mock
+        use_mock = not self.check_hardware_connected()
         self.face_analyzer = FaceAnalyzer()
-        self.alcohol_sensor = AlcoholSensor(1)
-        self.heart_sensor = HeartRateSensor()
+        self.alcohol_sensor = AlcoholSensor(1, use_mock=use_mock)
+        self.heart_sensor = HeartRateSensor(use_mock=use_mock)
+
+    def check_hardware_connected(self):
+        # 這裡可以根據實際硬體檢查方式實作
+        # 例如嘗試讀取硬體，失敗則回傳 False
+        return False  # 預設為測試模式
 
     def create_ui(self):
         """创建UI界面"""
@@ -72,10 +81,10 @@ class FatigueMonitorUI:
 
         # 状态指示灯
         self.status_indicators = {
-            "camera": self.create_status_indicator(status_frame, "摄像头", 0),
-            "alcohol": self.create_status_indicator(status_frame, "酒精检测", 1),
-            "heart": self.create_status_indicator(status_frame, "心率检测", 2),
-            "fatigue": self.create_status_indicator(status_frame, "疲劳状态", 3)
+            "camera": self.create_status_indicator(status_frame, "攝像頭\t", 0),
+            "alcohol": self.create_status_indicator(status_frame, "酒精檢測", 1),
+            "heart": self.create_status_indicator(status_frame, "心率檢測", 2),
+            "fatigue": self.create_status_indicator(status_frame, "疲劳狀態", 3)
         }
 
         # 警告标签
@@ -88,12 +97,10 @@ class FatigueMonitorUI:
         frame.grid(row=row, column=0, sticky="w", pady=2)
 
         label = ttk.Label(frame, text=f"{text}:")
-        label.pack(side=tk.LEFT)
+        label.pack(side=tk.LEFT, anchor="center", padx=(0, 5))
 
         canvas = tk.Canvas(frame, width=20, height=20, bg="white", bd=1, relief='solid')
-        canvas.pack(side=tk.LEFT, padx=5)
-        
-        # 初始设置为灰色
+        canvas.pack(side=tk.LEFT, anchor="center")
         self.set_indicator_color(canvas, "gray")
         return canvas
 
@@ -178,19 +185,18 @@ class FatigueMonitorUI:
 
     def get_sensor_data(self):
         """获取传感器数据"""
-        # 更新传感器数据
-        self.face_analyzer.update()
+        face_ok = self.face_analyzer.update()
         self.alcohol_sensor.update()
         self.heart_sensor.update()
-
-        # 获取最新数据
+    
         return {
             "alcohol_level": self.alcohol_sensor.get_alcohol(),
             "is_alcohol": self.alcohol_sensor.is_over_limit(),
             "heart_rate": self.heart_sensor.get_latest(),
             "is_heart_rate_normal": self.heart_sensor.is_normal(),
-            "fatigue_score": self.face_analyzer.get_fatigue_score(),
-            "is_fatigued": self.face_analyzer.is_fatigued()
+            "fatigue_score": self.face_analyzer.get_fatigue_score() if face_ok else 0.0,
+            "is_fatigued": self.face_analyzer.is_fatigued() if face_ok else False,
+            "camera_ok": face_ok
         }
 
     def update_ui(self, sensor_data):
@@ -201,7 +207,11 @@ class FatigueMonitorUI:
             sensor_data["fatigue_score"],
             sensor_data["is_fatigued"]
         )
-        self.update_status_indicators()
+        self.update_status_indicators(sensor_data["camera_ok"])
+        
+        # 只有在沒有警告時才覆蓋警告文字
+        if not self.warning_active:
+            self.warning_label.config(text="系统正常", foreground="green")
         self.check_warnings(
             sensor_data["is_alcohol"],
             sensor_data["is_heart_rate_normal"],
@@ -216,25 +226,33 @@ class FatigueMonitorUI:
         self.value_labels["eye"].config(text="闭眼" if is_fatigued else "正常")
         self.value_labels["mouth"].config(text="张开" if is_fatigued else "正常")
 
-    def update_status_indicators(self):
+    def update_status_indicators(self, camera_ok=True):
         """更新状态指示灯"""
-        # 传感器状态
-        self.set_indicator_color(self.status_indicators["camera"], "green")
-        self.set_indicator_color(self.status_indicators["alcohol"], "green")
-        self.set_indicator_color(self.status_indicators["heart"], "green")
-        
+        # 攝像頭狀態
+        self.set_indicator_color(self.status_indicators["camera"], "green" if camera_ok else "gray")
+
+        # 酒精狀態
+        alcohol_color = "yellow" if getattr(self.alcohol_sensor, "is_test_data", False) else "green"
+        self.set_indicator_color(self.status_indicators["alcohol"], alcohol_color)
+
+        # 心率狀態
+        heart_color = "yellow" if getattr(self.heart_sensor, "is_test_data", False) else "green"
+        self.set_indicator_color(self.status_indicators["heart"], heart_color)
+
         # 疲劳状态
         fatigue_score = float(self.value_labels["fatigue"].cget("text"))
         fatigue_color = "red" if fatigue_score > 0 else "green"
         self.set_indicator_color(self.status_indicators["fatigue"], fatigue_color)
-
+        
     def set_indicator_color(self, canvas, color):
         """设置指示灯颜色"""
         canvas.delete("all")
         canvas.create_oval(2, 2, 18, 18, fill=color, outline="black")
 
     def check_warnings(self, alcohol, heart, is_fatigued):
-        """检查并显示警告"""
+        """
+        檢查並顯示警告消息
+        """
         warnings = []
         if alcohol:
             warnings.append("酒精浓度过高!")
@@ -261,8 +279,15 @@ class FatigueMonitorUI:
 
     def test_warning(self):
         """测试警告功能"""
+        self.warning_active = True
         self.warning_label.config(text="测试警告消息", foreground="red")
         self.log_message("测试警告功能发出")
+        self.root.after(2000, self.clear_warning)
+
+    def clear_warning(self):
+        """清除警告消息"""
+        self.warning_label.config(text="系统正常", foreground="green")
+        self.warning_active = False
 
     def save_logs(self):
         """保存日志到文件"""
