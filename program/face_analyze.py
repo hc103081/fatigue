@@ -68,7 +68,7 @@ class FaceAnalyzer(Camera):
             shape = self.predictor(equa, face)
             self.set_landmarks_points(shape)
             score = self.get_fatigue_score()
-            fatigue = self.is_fatigued(score)
+            fatigue = self.is_fatigued()
             
             # 畫左眼 (特徵點 36–41)
             for i in range(36, 42):

@@ -123,7 +123,7 @@ class Monitor():
                 self.review(user_id)
                 
                 # 等待n秒後再次監控
-                # await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1)
                 
         except KeyboardInterrupt:
             Log.logger.debug("監控任務停止")
