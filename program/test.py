@@ -49,7 +49,7 @@ def camera_test():
     from face_analyze import FaceAnalyzer
     from camera import Camera
     import cv2
-        
+    
     with FaceAnalyzer() as face_analyzer:
         while True: 
 
@@ -57,14 +57,14 @@ def camera_test():
             frame = face_analyzer.get_frame()
             
             # 显示帧
-            cv2.imshow('摄像头画面', frame)
+            cv2.imshow('USB Camera', frame)
             # 按下 'q' 键退出循环
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 def camera_test2():
     import cv2
     import os
-    os.environ["QT_QPA_PLATFORM"] = "xcb"
+    # os.environ["QT_QPA_PLATFORM"] = "xcb"
 
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -165,8 +165,9 @@ def face_analyze_test():
 
 if __name__ == "__main__":
     # line_test()
-    camera_test()
+    # camera_test2()
     # face_analyze_test()
+    
     pass
     
 
