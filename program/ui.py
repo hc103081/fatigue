@@ -181,7 +181,7 @@ class FatigueMonitorUI:
                 self.update_ui(sensor_data)
             except Exception as e:
                 self.log_message(f"更新数据时发生错误: {str(e)}")
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     def get_sensor_data(self):
         """获取传感器数据"""
