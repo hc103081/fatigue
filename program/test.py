@@ -47,10 +47,9 @@ def gpio_test():
 # 相機測試
 def camera_test():
     from face_analyze import FaceAnalyzer
-    from camera import Camera
     import cv2
         
-    with FaceAnalyzer() as face_analyzer:
+    with FaceAnalyzer(0) as face_analyzer:
         while True:
 
             # 从摄像头读取一帧
@@ -61,6 +60,26 @@ def camera_test():
             # 按下 'q' 键退出循环
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+def camera_test2():
+    import cv2
+    import os
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
+
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("無法讀取鏡頭")
+            break
+        cv2.imshow("USB Camera", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
     
 def face_analyze_test3():
     from face_analyze import FaceAnalyzer
