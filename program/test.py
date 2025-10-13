@@ -141,11 +141,12 @@ def face_analyze_test():
             cv2.imshow("Fatigue Detection", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+                
 
 if __name__ == "__main__":
     # line_test()
-    # camera_test()
-    face_analyze_test3()
+    camera_test()
+    # face_analyze_test()
     pass
     
 

@@ -19,6 +19,9 @@ class Camera:
 
         try:
             self.cap = cv2.VideoCapture(camera_index)  # 初始化攝像頭
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
             
         except cv2.error:
             raise Exception("無法初始化攝像頭")
