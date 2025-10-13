@@ -47,10 +47,11 @@ def gpio_test():
 # 相機測試
 def camera_test():
     from face_analyze import FaceAnalyzer
+    from camera import Camera
     import cv2
         
-    with FaceAnalyzer(0) as face_analyzer:
-        while True:
+    with FaceAnalyzer() as face_analyzer:
+        while True: 
 
             # 从摄像头读取一帧
             frame = face_analyzer.get_frame()
@@ -72,7 +73,7 @@ def camera_test2():
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("無法讀取鏡頭")
+            print("have no camera")
             break
         cv2.imshow("USB Camera", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -80,7 +81,7 @@ def camera_test2():
 
     cap.release()
     cv2.destroyAllWindows()
-    
+
 def face_analyze_test3():
     from face_analyze import FaceAnalyzer
     import cv2
