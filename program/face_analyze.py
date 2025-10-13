@@ -8,11 +8,11 @@ import cv2
 class FaceAnalyzer(Camera):
     """臉部分析模組"""
     
-    def __init__(self):
+    def __init__(self, camera_index=0):
         """
         初始化臉部分析器
         """
-        super().__init__()
+        super().__init__(camera_index)
         
         # 載入 dlib 的臉部偵測器與關鍵點預測模型
         self.detector = dlib.get_frontal_face_detector()

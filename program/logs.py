@@ -3,7 +3,7 @@ import logging
 class Log:
     FORMAT = '%(asctime)s %(levelname)s(%(funcName)s): %(message)s'
     logging.basicConfig(level=logging.DEBUG, 
-                        filename='C:/VsCode/build/fatigue/log/Log.log', 
+                        filename='log/Log.log', 
                         filemode='w', 
                         format=FORMAT, 
                         encoding='utf-8')

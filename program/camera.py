@@ -1,6 +1,7 @@
 import time
 import cv2
 from logs import Log
+import os
 
 class Camera:
     """攝像頭模組"""
@@ -11,6 +12,7 @@ class Camera:
         Params:
             camera_index: 攝像頭索引 預設為 0      
         """
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
         self.camera_index = camera_index
         self.last_log_time = 0  # 新增：記錄上一次 log 的時間
         
@@ -19,6 +21,9 @@ class Camera:
 
         try:
             self.cap = cv2.VideoCapture(camera_index)  # 初始化攝像頭
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
             
         except cv2.error:
             raise Exception("無法初始化攝像頭")
