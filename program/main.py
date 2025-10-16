@@ -98,7 +98,7 @@ class Monitor():
                 # 刷新所有數據
                 alcohol_update = asyncio.to_thread(self.alcohol_sensor.update)
                 heart_update = asyncio.to_thread(self.heart_sensor.update)
-                face_analyzer_update = loop.run_in_executor(None, self.face_analyzer.update)
+                face_analyzer_update = loop.run_in_executor(None, self.face_analyzer.update,True)
                 
                 # 等待所有感測器數據
                 alcohol_ok = await alcohol_update
@@ -175,7 +175,7 @@ class Monitor():
         return False  # 預設為測試模式
             
     # 獲取當前狀態消息
-    def get_status_msg(self):
+    def get_state_msg(self):
         """
         獲取當前狀態消息
         Returns:
@@ -186,8 +186,8 @@ class Monitor():
         alcohol_level = self.alcohol_sensor.get_alcohol()
 
         # 狀態判斷
-        status_msg = f"疲倦:, 心率:{heart_rate}, 酒精:{alcohol_level}"
-        return status_msg
+        state_msg = f"疲倦:, 心率:{heart_rate}, 酒精:{alcohol_level}"
+        return state_msg
         
     def __enter__(self):
         return self
@@ -212,7 +212,7 @@ def set_scheduled(user_id):
 
 # 向Line用戶端發送消息
 def send_message(user_id):
-    line_bot.sent_message(user_id, Monitor.get_status_msg())
+    line_bot.sent_message(user_id, Monitor.get_state_msg())
 
 
 if __name__ == "__main__":

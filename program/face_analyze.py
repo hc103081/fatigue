@@ -27,43 +27,48 @@ class FaceAnalyzer(Camera):
         # 疲勞值
         self.fatigue_score = 0.0
         
-        # 眼睛縱橫比 EAR
+        # 眼睛縱橫比
         self.ear = 0.0
-        
-        # 嘴巴張開比 MAR
+        # 嘴巴開合比
         self.mar = 0.0
-        
 
-    def show(self):
+    def show(self,frame,landmarks):
         """
         顯示影像
         """
-        frame = self.get_frame()
         if frame is None:
             Log.logger.warning("未取得影像 frame，跳過顯示")
             return
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        equa = cv2.equalizeHist(gray)
-        face_rects = self.detector(equa,0)
         
+        fatigue_state = self.is_fatigued()
 
-        # 取出所有偵測的結果
-        for i, d in enumerate(face_rects):
-            x1 = d.left()
-            y1 = d.top()
-            x2 = d.right()
-            y2 = d.bottom()
+        # 畫左眼 (特徵點 36–41)
+        for i in range(36, 42):
+            x, y = landmarks.part(i).x, landmarks.part(i).y
+            cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
-            # 以方框標示偵測的人臉
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
+        # 畫右眼 (特徵點 42–47)
+        for i in range(42, 48):
+            x, y = landmarks.part(i).x, landmarks.part(i).y
+            cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
+        # 畫嘴巴 (特徵點 48–67)
+        for i in range(48, 68):
+            x, y = landmarks.part(i).x, landmarks.part(i).y
+            cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
+
+        # 顯示結果W
+        text = f"Fatigue Score: {self.fatigue_score:.2f} | Fatigued: {fatigue_state}"
+        cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if fatigue_state else (0, 255, 0), 2)
+            
+        
         # 顯示結果
         cv2.imshow("Face Detection", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             pass
             
-    def update(self):
+    def update(self,show=False):
         """
         更新影像分析數據
         """
@@ -76,75 +81,74 @@ class FaceAnalyzer(Camera):
                 Log.logger.warning("未取得影像 frame，跳過分析")
                 self.last_log_time = now
             return False
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        equa = cv2.equalizeHist(gray)
-        faces = self.detector(equa)
+        gray = cv2.equalizeHist(gray)
+        faces = self.detector(gray)
         
         for face in faces:
-            shape = self.predictor(equa, face)
-            self.set_landmarks_points(shape)
-            score = self.get_fatigue_score()
-            fatigue = self.is_fatigued()
+            # 提取臉部關鍵點
+            landmarks = self.predictor(gray, face)
             
-            # 畫左眼 (特徵點 36–41)
-            for i in range(36, 42):
-                x, y = shape.part(i).x, shape.part(i).y
-                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
-
-            # 畫右眼 (特徵點 42–47)
-            for i in range(42, 48):
-                x, y = shape.part(i).x, shape.part(i).y
-                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
-
-            # 畫嘴巴 (特徵點 48–67)
-            for i in range(48, 68):
-                x, y = shape.part(i).x, shape.part(i).y
-                cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
-
-            # 顯示結果W
-            text = f"Fatigue Score: {score:.2f} | Fatigued: {fatigue}"
-            cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if fatigue else (0, 255, 0), 2)
-        cv2.imshow("Fatigue Detection", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            pass
+            # 提取眼睛縱橫比和嘴巴開合比
+            self.ear, self.mar = self.get_ear_mar(landmarks)
+            # 計算疲勞值
+            self.fatigue_score = self.get_fatigue_score()
+            if show:
+                self.show(frame,landmarks)
+        
         return True
     
-   # 計算眼睛縱橫比 EAR
     def compute_ear(self,eye_points):
+        """
+        計算眼睛縱橫比 EAR
+        """
         A = np.linalg.norm(eye_points[1] - eye_points[5])
         B = np.linalg.norm(eye_points[2] - eye_points[4])
         C = np.linalg.norm(eye_points[0] - eye_points[3])
         ear = (A + B) / (2.0 * C)
         return ear
 
-    # 計算嘴巴張開比 MAR
     def compute_mar(self,mouth_points):
+        """
+        計算嘴巴張開比 MAR
+        """
         A = np.linalg.norm(mouth_points[13] - mouth_points[19])  # 上下
         B = np.linalg.norm(mouth_points[14] - mouth_points[18])
         C = np.linalg.norm(mouth_points[12] - mouth_points[16])  # 左右
         mar = (A + B) / (2.0 * C)
         return mar
 
-    def set_landmarks_points(self,landmarks):
+    def get_ear_mar(self,landmarks):
+        """
+        計算眼睛縱橫比 EAR 與嘴巴張開比 MAR
+        """
         left_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(36, 42)])
         right_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(42, 48)])
         mouth = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(48, 68)])
 
-        self.ear = (self.compute_ear(left_eye) + self.compute_ear(right_eye)) / 2.0
-        self.mar = self.compute_mar(mouth)
-        return left_eye, right_eye, mouth
+        ear = (self.compute_ear(left_eye) + self.compute_ear(right_eye)) / 2.0
+        mar = self.compute_mar(mouth)
+        return ear,mar
 
-    # 回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
     def get_fatigue_score(self):
+        """
+        回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
+        """
         # 疲勞值公式：MAR - EAR（可依需求調整權重）
         fatigue_score = self.mar - self.ear
-        self.fatigue_score = fatigue_score
         return fatigue_score
 
-    # 回傳是否疲勞（根據疲勞值是否超過閾值）
-    def is_fatigued(self, threshold=0):
-        self.fatigue_score = self.get_fatigue_score()
-        return (self.fatigue_score > threshold)
+    def is_fatigued(self, threshold=0.3):
+        """
+        回傳是否疲勞（根據疲勞值是否超過閾值）
+        Params:
+            threshold: 疲勞值閾值
+        Returns:
+            如果疲勞值超過 threshold 則回傳 True
+        """
+        fatigue_score = self.get_fatigue_score()
+        return (fatigue_score > threshold)
         
         
     def __enter__(self):

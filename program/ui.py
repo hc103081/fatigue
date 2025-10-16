@@ -185,7 +185,7 @@ class FatigueMonitorUI:
 
     def get_sensor_data(self):
         """获取传感器数据"""
-        face_ok = self.face_analyzer.update()
+        face_ok = self.face_analyzer.update(show=True)
         self.alcohol_sensor.update()
         self.heart_sensor.update()
     
