@@ -95,27 +95,39 @@ def face_analyze_test3():
 def face_analyze_test2():
     from face_analyze import FaceAnalyzer
     import cv2
-    
+    import numpy as np
+
     with FaceAnalyzer() as face_analyzer:
         while True:
             frame = face_analyzer.get_frame()
+            if frame is None:
+                continue
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             equa = cv2.equalizeHist(gray)
-            faces = face_analyzer.detector(equa,0)
-            
-            # 取出所有偵測的結果
-            for i, d in enumerate(faces):
-                x1 = d.left()
-                y1 = d.top()
-                x2 = d.right()
-                y2 = d.bottom()
 
-                # 以方框標示偵測的人臉
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
-                    
+            # 強制轉型與驗證
+            if not isinstance(equa, np.ndarray):
+                raise TypeError("equa 不是 numpy 陣列")
+            if equa.dtype != np.uint8:
+                equa = equa.astype(np.uint8)
+            if len(equa.shape) != 2:
+                raise ValueError("equa 必須是灰階圖像 (H, W)")
+
+            faces = face_analyzer.detector(equa, 0)
+
+            # landmark 預測
+            for i, face in enumerate(faces):
+                shape = face_analyzer.predictor(gray)
+                print(f"人臉 {i+1} 的關鍵點座標：")
+                for idx in range(68):
+                    x = shape.part(idx).x
+                    y = shape.part(idx).y
+                    print(f"  Point {idx}: ({x}, {y})")
+
             cv2.imshow("Fatigue Detection", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                break
     
 def face_analyze_test():
     from face_analyze import FaceAnalyzer
@@ -134,7 +146,6 @@ def face_analyze_test():
             for face in faces:
                 # 偵測特徵點
                 shape = face_analyzer.predictor(equa, face)
-                face_analyzer.set_landmarks_points(shape)
                 score = face_analyzer.get_fatigue_score()
                 fatigue = face_analyzer.is_fatigued(score)
                 
@@ -165,7 +176,7 @@ def face_analyze_test():
 
 if __name__ == "__main__":
     # line_test()
-    # camera_test2()
+    face_analyze_test2()
     # face_analyze_test()
     
     pass
