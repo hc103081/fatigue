@@ -60,7 +60,7 @@ class Camera:
         """ 退出 with 語句時自動關閉攝像頭 """
         self.close()
         if exc_type is not None:
-            Log.logger.warning(exc_type, exc_val, exc_tb)
+            Log.logger.warning(f'{exc_type}, {exc_val}, {exc_tb}')
             return False  # 攔截例外並回傳 False
         Log.logger.debug("camera closed")
         return True  # 正常結束 with 語句

@@ -9,7 +9,7 @@ from logs import Log
 
 
 class FatigueMonitorUI:
-    def __init__(self, root):
+    def __init__(self, root:tk.Tk):
         self.root = root
         self.setup_window()
         self.init_sensors()
@@ -20,7 +20,7 @@ class FatigueMonitorUI:
 
     def setup_window(self):
         """设置窗口基本属性"""
-        self.root.title("疲劳驾驶监控系统")
+        self.root.title("Fatigue Monitor")
         self.root.geometry("800x600")
         self.root.resizable(True, True)
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
