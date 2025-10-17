@@ -106,9 +106,6 @@ def face_analyze_test2():
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             equa = cv2.equalizeHist(gray)
 
-<<<<<<< HEAD
-            
-=======
             # 強制轉型與驗證
             if not isinstance(equa, np.ndarray):
                 raise TypeError("equa 不是 numpy 陣列")
@@ -128,7 +125,6 @@ def face_analyze_test2():
                     y = shape.part(idx).y
                     print(f"  Point {idx}: ({x}, {y})")
 
->>>>>>> c4a9de6a462bc8959a35ef631e1ca26be04084d1
             cv2.imshow("Fatigue Detection", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -180,11 +176,7 @@ def face_analyze_test():
 
 if __name__ == "__main__":
     # line_test()
-<<<<<<< HEAD
-    face_analyze_test()
-=======
     face_analyze_test2()
->>>>>>> c4a9de6a462bc8959a35ef631e1ca26be04084d1
     # face_analyze_test()
     
     pass
