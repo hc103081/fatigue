@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
+import cv2
 from alcohol import AlcoholSensor
 from face_analyze import FaceAnalyzer
 from heart import HeartRateSensor
 import threading
 import time
 from logs import Log
-
 
 class FatigueMonitorUI:
     def __init__(self, root:tk.Tk):
@@ -24,6 +25,8 @@ class FatigueMonitorUI:
         self.root.geometry("800x600")
         self.root.resizable(True, True)
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.state('zoomed')
+
 
     def init_sensors(self):
         """初始化传感器"""
@@ -40,12 +43,14 @@ class FatigueMonitorUI:
 
     def create_ui(self):
         """创建UI界面"""
-        self.create_main_frame()
-        self.setup_styles()
-        self.create_status_section()
-        self.create_values_section()
-        self.create_control_section()
-        self.create_log_section()
+        self.create_main_frame()        # 創建主框架
+        self.setup_styles()             # 設置UI樣式
+        self.create_status_section()    # 創建狀態區
+        self.create_values_section()    # 創建數值區
+        self.create_control_section()   # 創建控制區
+        self.create_log_section()       # 創建日誌區
+        self.create_image_section()     # 創建影像顯示區
+        
 
     def start_update_thread(self):
         """启动数据更新线程"""
@@ -141,13 +146,14 @@ class FatigueMonitorUI:
         
         # 使用网格布局管理器
         control_frame.grid_columnconfigure(0, weight=1)
-        control_frame.grid_rowconfigure(3, weight=1)
+        control_frame.grid_rowconfigure(4, weight=1)
 
         # 控制按钮
         buttons = [
             ("重置传感器", self.reset_sensors),
             ("测试警告", self.test_warning),
             ("保存日志", self.save_logs),
+            ("切換影像顯示", self.toggle_image), 
             ("退出系统", self.on_close)
         ]
 
@@ -173,19 +179,57 @@ class FatigueMonitorUI:
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.log_text.config(yscrollcommand=scrollbar.set)
 
+    def create_image_section(self):
+        self.show_image = True  # 新增：影像顯示狀態
+        
+        # 設定 image_label 初始大小與背景
+        self.image_label = tk.Label(self.main_frame, bg="black")
+        self.image_label.grid(row=0, column=2, rowspan=2, padx=0, pady=1, sticky="nsew")
+        # 讓 image 區域自動伸縮
+        self.main_frame.grid_columnconfigure(2, weight=2)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(1, weight=1)
+
+        
+    def update_face_image(self, frame):
+        """更新图像显示，並自適應大小，消除閃爍"""
+        if not self.show_image or frame is None:
+            self.image_label.config(image="", bg="black")
+            return
+        # 取得目前 image_label 大小
+        # label_width = self.image_label.winfo_width()
+        # label_height = self.image_label.winfo_height()
+        # 設定最大顯示尺寸
+        # max_width, max_height = 400, 300
+        # if label_width < 10 or label_height < 10:
+        #     label_width, label_height = max_width, max_height
+        # OpenCV 的 frame 是 BGR，要轉成 RGB
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(rgb_frame)
+        
+        # 自適應縮放
+        # img = img.resize(
+        #     (min(img.width, label_width, max_width), min(img.height, label_height, max_height)),
+        #     Image.Resampling.LANCZOS
+        # )
+        imgtk = ImageTk.PhotoImage(image=img)
+        self.image_label.imgtk = imgtk  # 防止被垃圾回收
+        self.image_label.config(image=imgtk, bg="black")
+
     def update_data(self):
         """定期更新传感器数据"""
         while self.running:
             try:
                 sensor_data = self.get_sensor_data()
                 self.update_ui(sensor_data)
+                
             except Exception as e:
                 self.log_message(f"更新数据时发生错误: {str(e)}")
             time.sleep(0.1)
 
     def get_sensor_data(self):
         """获取传感器数据"""
-        face_ok = self.face_analyzer.update(show=True)
+        face_ok = self.face_analyzer.update(show=False)
         self.alcohol_sensor.update()
         self.heart_sensor.update()
     
@@ -201,12 +245,21 @@ class FatigueMonitorUI:
 
     def update_ui(self, sensor_data):
         """更新UI界面"""
-        self.update_ui_values(
+        # 更新数值显示
+        self.update_ui_values( 
             sensor_data["alcohol_level"],
             sensor_data["heart_rate"],
             sensor_data["fatigue_score"],
             sensor_data["is_fatigued"]
         )
+        # 更新臉部影像
+        frame = self.face_analyzer.get_frame()
+        if frame is not None:
+            self.update_face_image(frame)
+        else:
+            self.log_message("未取得影像 frame，跳過分析")
+            
+        # 更新狀態指示器
         self.update_status_indicators(sensor_data["camera_ok"])
         
         # 只有在沒有警告時才覆蓋警告文字
@@ -248,6 +301,14 @@ class FatigueMonitorUI:
         """设置指示灯颜色"""
         canvas.delete("all")
         canvas.create_oval(2, 2, 18, 18, fill=color, outline="black")
+    def toggle_image(self):
+        """切換影像顯示"""
+        self.show_image = not self.show_image
+        if self.show_image:
+            self.image_label.grid()
+        else:
+            self.image_label.grid_remove()
+
 
     def check_warnings(self, alcohol, heart, is_fatigued):
         """
@@ -305,10 +366,9 @@ class FatigueMonitorUI:
     def on_close(self):
         """处理窗口关闭事件"""
         self.running = False
-        if self.update_thread.is_alive():
-            self.update_thread.join()
         self.face_analyzer.close()
         self.root.destroy()
+        
 
 
 if __name__ == "__main__":

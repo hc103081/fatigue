@@ -10,6 +10,7 @@ from line_Api import start_line_Api
 from line_bot import Line_bot
 from logs import Log
 import multiprocessing
+from ui import FatigueMonitorUI
 
 # Line用戶端user_id
 _user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'  
@@ -216,9 +217,7 @@ def send_message(user_id):
 
 
 if __name__ == "__main__":
-    main()
-
-
-    def check_hardware_connected(self):
-        # 這裡可以根據實際硬體檢查方式實作
-        return False  # 預設為測試模式
+    
+    pass
+    
+    
