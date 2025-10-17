@@ -106,7 +106,29 @@ def face_analyze_test2():
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             equa = cv2.equalizeHist(gray)
 
+<<<<<<< HEAD
             
+=======
+            # 強制轉型與驗證
+            if not isinstance(equa, np.ndarray):
+                raise TypeError("equa 不是 numpy 陣列")
+            if equa.dtype != np.uint8:
+                equa = equa.astype(np.uint8)
+            if len(equa.shape) != 2:
+                raise ValueError("equa 必須是灰階圖像 (H, W)")
+
+            faces = face_analyzer.detector(equa, 0)
+
+            # landmark 預測
+            for i, face in enumerate(faces):
+                shape = face_analyzer.predictor(gray)
+                print(f"人臉 {i+1} 的關鍵點座標：")
+                for idx in range(68):
+                    x = shape.part(idx).x
+                    y = shape.part(idx).y
+                    print(f"  Point {idx}: ({x}, {y})")
+
+>>>>>>> c4a9de6a462bc8959a35ef631e1ca26be04084d1
             cv2.imshow("Fatigue Detection", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -158,7 +180,11 @@ def face_analyze_test():
 
 if __name__ == "__main__":
     # line_test()
+<<<<<<< HEAD
     face_analyze_test()
+=======
+    face_analyze_test2()
+>>>>>>> c4a9de6a462bc8959a35ef631e1ca26be04084d1
     # face_analyze_test()
     
     pass
