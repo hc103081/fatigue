@@ -41,14 +41,14 @@
     <div id="fatigue" class="value">載入中...</div>
   </div>
 
-  <div id="speed-block" class="data-block">
-    <div class="label">車速：</div>
-    <div id="speed" class="value">載入中...</div>
+  <div id="heart-rate-block" class="data-block">
+    <div class="label">心率：</div>
+    <div id="heart_rate" class="value">載入中...</div>
   </div>
 
-  <div id="drive-time-block" class="data-block">
-    <div class="label">駕駛時間：</div>
-    <div id="drive_time" class="value">載入中...</div>
+  <div id="alcohol-level-block" class="data-block">
+    <div class="label">酒精濃度：</div>
+    <div id="alcohol_level" class="value">載入中...</div>
   </div>
 
   <div id="error-message" class="error"></div>
@@ -62,20 +62,20 @@
         if (data.error) {
           document.getElementById('error-message').innerText = '❌ ' + data.error;
           document.getElementById('fatigue').innerText = '-';
-          document.getElementById('speed').innerText = '-';
-          document.getElementById('drive_time').innerText = '-';
+          document.getElementById('heart_rate').innerText = '-';
+          document.getElementById('alcohol_level').innerText = '-';
           return;
         }
 
-        document.getElementById('fatigue').innerText = data.fatigue;
-        document.getElementById('speed').innerText = data.speed + ' km/h';
-        document.getElementById('drive_time').innerText = data.drive_time + ' 分鐘';
+        document.getElementById('fatigue').innerText = data.fatigue_score;
+        document.getElementById('heart_rate').innerText = (data.heart_rate ?? '-') + ' 次/分';
+        document.getElementById('alcohol_level').innerText = (data.alcohol_level ?? '-') + ' 度';
         document.getElementById('error-message').innerText = '';
       } catch (error) {
         document.getElementById('error-message').innerText = '❌ 無法取得資料，請稍後再試。';
         document.getElementById('fatigue').innerText = '-';
-        document.getElementById('speed').innerText = '-';
-        document.getElementById('drive_time').innerText = '-';
+        document.getElementById('heart_rate').innerText = '-';
+        document.getElementById('alcohol_level').innerText = '-';
       }
     }
 
