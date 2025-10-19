@@ -1,8 +1,11 @@
 from flask import Flask, jsonify
 import requests
 from program.dataClass import SensorData
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, origins=["https://hc103081.github.io"])  # 新增這行
+
 
 @app.route('/get_dataClass', methods=['GET', 'POST'])
 def get_classdata():

@@ -2,6 +2,8 @@ from dataclasses import asdict
 from flask import Flask, jsonify
 from logs import Log
 from dataClass import SensorData
+from ngrok import ngrok_start
+import threading
 
 app = Flask(__name__)
 
@@ -20,4 +22,8 @@ def get_dataClass():
     return jsonify(asdict(data))
 
 if __name__ == "__main__":
-    app.run()
+    app_thread = threading.Thread(target=app.run)
+    app_thread.start()
+    
+    ngrok_thread = threading.Thread(target=ngrok_start)
+    ngrok_thread.start()
