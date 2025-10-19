@@ -5,7 +5,7 @@ from dataClass import SensorData
 
 app = Flask(__name__)
 
-@app.route('/get_dataClass', methods=['GET'])
+@app.route('/get_dataClass', methods=['GET', 'POST'])
 def get_dataClass():
     # 這裡取得感測資料
     data = SensorData(

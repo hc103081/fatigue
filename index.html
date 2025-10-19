@@ -56,7 +56,7 @@
   <script>
     async function fetchFatigueData() {
       try {
-        const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass');
+        const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass', { method: 'GET' });
         const data = await response.json();
 
         if (data.error) {
