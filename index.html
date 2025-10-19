@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>疲勞駕駛監測系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h2 {
+      color: #333;
+    }
+    .data-block {
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .value {
+      font-size: 1.2em;
+      color: #007bff;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>🚗 疲勞駕駛監測系統</h2>
+
+  <div id="fatigue-block" class="data-block">
+    <div class="label">疲勞指數：</div>
+    <div id="fatigue" class="value">載入中...</div>
+  </div>
+
+  <div id="speed-block" class="data-block">
+    <div class="label">車速：</div>
+    <div id="speed" class="value">載入中...</div>
+  </div>
+
+  <div id="drive-time-block" class="data-block">
+    <div class="label">駕駛時間：</div>
+    <div id="drive_time" class="value">載入中...</div>
+  </div>
+
+  <div id="error-message" class="error"></div>
+
+  <script>
+    async function fetchFatigueData() {
+      try {
+        const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass');
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById('error-message').innerText = '❌ ' + data.error;
+          document.getElementById('fatigue').innerText = '-';
+          document.getElementById('speed').innerText = '-';
+          document.getElementById('drive_time').innerText = '-';
+          return;
+        }
+
+        document.getElementById('fatigue').innerText = data.fatigue;
+        document.getElementById('speed').innerText = data.speed + ' km/h';
+        document.getElementById('drive_time').innerText = data.drive_time + ' 分鐘';
+        document.getElementById('error-message').innerText = '';
+      } catch (error) {
+        document.getElementById('error-message').innerText = '❌ 無法取得資料，請稍後再試。';
+        document.getElementById('fatigue').innerText = '-';
+        document.getElementById('speed').innerText = '-';
+        document.getElementById('drive_time').innerText = '-';
+      }
+    }
+
+    // 每 n 秒自動刷新資料
+    setInterval(fetchFatigueData,2000);
+    fetchFatigueData();
+  </script>
+</body>
+</html>
