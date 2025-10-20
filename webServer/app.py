@@ -29,13 +29,11 @@ def video_feed():
     """
     pi_video_url = "https://undenunciated-ultrared-neil.ngrok-free.app/video_feed"
     try:
-        # 以串流方式取得 Pi 端 MJPEG
-        pi_response = requests.get(pi_video_url, stream=True, timeout=5)
+        pi_response = requests.get(pi_video_url, stream=True, timeout=60)  # 增加 timeout
         def generate():
             for chunk in pi_response.iter_content(chunk_size=1024):
                 if chunk:
                     yield chunk
-        # 回傳 multipart/x-mixed-replace 格式
         return app.response_class(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
     except Exception as e:
         return f"串流取得失敗: {str(e)}", 500
