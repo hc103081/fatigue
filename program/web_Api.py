@@ -9,13 +9,16 @@ from camera import Camera
 
 class WebApi(Camera):
     """Web API 服務"""
-    
-    app = Flask(__name__)
-        
-    def __init__(self):
+    def __init__(self, app: Flask):
         super().__init__()
+        self.app = app
+        self.app.add_url_rule('/get_dataClass',
+                              view_func=self.get_dataClass,
+                              methods=['GET'])
+        self.app.add_url_rule('/video_feed',
+                              view_func=self.video_feed,
+                              methods=['GET'])
 
-    @app.route('/get_dataClass', methods=['GET', 'POST'])
     def get_dataClass(self):
         # 這裡取得感測資料
         data = SensorData(
@@ -29,7 +32,6 @@ class WebApi(Camera):
         )
         return jsonify(asdict(data))
     
-    @app.route('/video_feed', methods=['GET'])
     def video_feed(self):
         return Response(self.get_frame_encoded(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -50,7 +52,8 @@ class WebApi(Camera):
         super().__exit__(exc_type, exc_value, traceback)
     
 if __name__ == "__main__":
-    with WebApi() as web_thread:
+    app = Flask(__name__)
+    with WebApi(app) as web_thread:
         app_thread = threading.Thread(target=web_thread.app.run)
         app_thread.start()
     

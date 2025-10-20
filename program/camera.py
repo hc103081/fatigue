@@ -1,8 +1,10 @@
 import time
 import cv2
+from singleton_decorator import singleton
 from logs import Log
 import os
 
+@singleton
 class Camera:
     """攝像頭模組"""
 
@@ -27,9 +29,8 @@ class Camera:
             
         except cv2.error:
             raise Exception("無法初始化攝像頭")
-        
-        
-     # 讀取一幀影像
+
+    # 讀取一幀影像
     def get_frame(self):
         """ 
         讀取並回傳一幀影像\n

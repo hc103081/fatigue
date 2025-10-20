@@ -1,4 +1,3 @@
-import re
 from flask import Flask, json, request
 from logs import Log
 
@@ -11,18 +10,16 @@ from linebot.models import TextSendMessage
 access_token = 'ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU='
 secret = 'ccb3a53029a0ae2eda6fd90ed07e4fd0'
 
-# 控制發送訊息權限
-status_can_sent_message = False
-
 line_bot_api = LineBotApi(access_token)
 
 class Line_bot:
     """自訂 Line Bot 類別"""
+    
+    def __init__(self, app: Flask):
+        self.app = app
+        self.app.add_url_rule("/", view_func=self.linebot, methods=['POST'])
 
-    app = Flask(__name__)
-
-    @app.route("/", methods=['POST'])
-    def linebot():
+    def linebot(self):
         body = request.get_data(as_text=True)                    # 取得收到的訊息內容
         try:
             json_data = json.loads(body)                         # json 格式化訊息內容
@@ -50,18 +47,7 @@ class Line_bot:
             Log.logger.warning(f"{body}+\n\n{e}")
         return 'OK'                                              # 驗證 Webhook 使用，不能省略
 
-    # 傳送訊息給指定使用者
-    def sent_message(self,user_id, message):
-        """
-        Params:
-            user_id: 要傳送訊息的使用者 ID
-            message: 要傳送的訊息內容
-        """
-        if status_can_sent_message == False:
-            Log.logger.info("控制權未開啟，無法傳送訊息!")
-            return False
-        
-        line_bot_api.push_message(user_id, TextSendMessage(text=message))
+    
         
 
     

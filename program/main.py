@@ -1,4 +1,5 @@
 import asyncio
+from flask import Flask
 from alcohol import AlcoholSensor
 from face_analyze import FaceAnalyzer
 from gpio import GPIO
@@ -21,17 +22,15 @@ start_time = 8
 # 設定定時任務結束時間
 end_time = 20
 
-def main():
-    global line_bot
+def main():    
     # 設置GPIO模式
     GPIO.setmode(GPIO.BCM)
     
-    # 啟用Line_bot
-    line_bot = Line_bot()
+    app = Flask(__name__)  # 建立唯一 Flask 實例
     
     # 主程式循環
     try:
-        with Monitor() as monitor:
+        with MonitorCenter(app) as monitor:
             # 啟動定時任務
             schedule_thread = threading.Thread(target=set_scheduled, 
                             args=(_user_id,)
@@ -59,11 +58,11 @@ def main():
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
 
-class Monitor():
+class MonitorCenter():
     """
     監控類別，用於監控感測器數據並發送警告消息。
     """
-    def __init__(self):
+    def __init__(self, app: Flask):
         """
         初始化套件
         """
@@ -78,6 +77,7 @@ class Monitor():
             self.face_analyzer = FaceAnalyzer()
             self.alcohol_sensor = AlcoholSensor(1, use_mock=use_mock)
             self.heart_sensor = HeartRateSensor(use_mock=use_mock)
+            self.line_bot = Line_bot(app)
             
         except Exception as e:
             Log.logger.warning(f"發生錯誤: {e}")
@@ -136,17 +136,17 @@ class Monitor():
         
         # 如果酒精濃度超過限制，發送警告消息
         if self.alcohol_sensor.is_over_limit():
-            line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
+            self.line_bot.sent_message(user_id, "警告: 酒精濃度過高，請勿駕駛！")
             Log.logger.info("警告: 酒精濃度過高，請勿駕駛！")
             
         # 如果心率異常，發送警告消息
         if self.heart_sensor.is_normal():
-            line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
+            self.line_bot.sent_message(user_id, "警告: 心率異常，請注意休息！")
             Log.logger.info("警告: 心率異常，請注意休息！")
         
         # 判斷人臉偵測到疲勞
         if self.face_analyzer.is_fatigued():
-            line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
+            self.line_bot.sent_message(user_id, "警告: 人臉偵測到疲勞，請注意休息！")
             Log.logger.info("警告: 人臉偵測到疲勞，請注意休息！")
     
     def is_in_cd(self):
@@ -198,8 +198,6 @@ class Monitor():
         self.alcohol_sensor.__exit__(exc_type, exc_val, exc_tb)
         self.heart_sensor.__exit__(exc_type, exc_val, exc_tb)
         pass
-        
-
     
 
 # 設置定時任務
@@ -210,10 +208,6 @@ def set_scheduled(user_id):
         time_now = time.localtime().tm_hour
 
         time.sleep(1000)
-
-# 向Line用戶端發送消息
-def send_message(user_id):
-    line_bot.sent_message(user_id, Monitor.get_state_msg())
 
 
 if __name__ == "__main__":
