@@ -10,7 +10,7 @@ def ngrok_start():
     啟動 ngrok 並監看輸出以取得 public url
     """
     # ngrok 可執行檔路徑（Windows 範例）
-    NGROK_BIN = r"C:\temp\ngrok-v3-stable-windows-amd64\ngrok.exe"  # 改成路徑
+    NGROK_BIN = r"C:\vscode\ngrok\ngrok.exe"  # 改成路徑
     # Linux / macOS 範例: NGROK_BIN = "/usr/local/bin/ngrok"
 
     # 構造參數字串
