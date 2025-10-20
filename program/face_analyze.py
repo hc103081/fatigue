@@ -156,4 +156,3 @@ class FaceAnalyzer(Camera):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        pass
