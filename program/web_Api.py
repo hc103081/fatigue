@@ -1,5 +1,6 @@
 from dataclasses import asdict
-from flask import Flask, jsonify
+import cv2
+from flask import Flask, Response, jsonify
 from logs import Log
 from dataClass import SensorData
 from ngrok import ngrok_start
@@ -20,6 +21,22 @@ def get_dataClass():
         camera_ok=True
     )
     return jsonify(asdict(data))
+
+def gen_frames():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+@app.route('/video_feed', methods=['GET'])
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     app_thread = threading.Thread(target=app.run)
