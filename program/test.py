@@ -186,14 +186,12 @@ def flask_test():
         line_thread = threading.Thread(target=Line_bot.app.run)
         line_thread.start()
         
-    
-        
         
 if __name__ == "__main__":
     # line_test()
     # face_analyze_test2()
     # face_analyze_test()
-    flask_test()
+    # flask_test()
     pass
     
 

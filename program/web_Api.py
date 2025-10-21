@@ -7,10 +7,11 @@ from ngrok import ngrok_start
 import threading
 from camera import Camera
 
-class WebApi(Camera):
+class WebApi():
     """Web API 服務"""
     def __init__(self, app: Flask):
         super().__init__()
+        self.camera = Camera()
         self.app = app
         self.app.add_url_rule('/get_dataClass',
                               view_func=self.get_dataClass,
@@ -37,7 +38,7 @@ class WebApi(Camera):
 
     def get_frame_encoded(self):
         while True:
-            frame = self.get_frame()
+            frame = self.camera.get_frame()
             if frame is None:
                 break
             else:

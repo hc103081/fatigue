@@ -1,12 +1,17 @@
 import time
 import cv2
-from singleton_decorator import singleton
 from logs import Log
 import os
 
-@singleton
 class Camera:
     """攝像頭模組"""
+    _instance = None  # 單例實例變量
+    
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(Camera, cls).__new__(cls, *args, **kwargs)
+            cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self, camera_index=0):
         """ 
