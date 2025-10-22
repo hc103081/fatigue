@@ -7,9 +7,14 @@ from face_analyze import FaceAnalyzer
 from heart import HeartRateSensor
 import threading
 import time
-from dataClass import SensorData
+from dataClass import DataUnified
+from main import get_sensor_data
 
 class FatigueMonitorUI:
+    """
+    疲勞監控UI類別\n
+    用於顯示感測器資料與控制監控流程
+    """
     def __init__(self, root:tk.Tk):
         self.root = root
         self.setup_window()
@@ -31,11 +36,7 @@ class FatigueMonitorUI:
 
     def init_sensors(self):
         """初始化传感器"""
-        # 這裡可以根據是否有硬體自動判斷 use_mock
-        use_mock = not self.check_hardware_connected()
-        self.face_analyzer = FaceAnalyzer()
-        self.alcohol_sensor = AlcoholSensor(1, use_mock=use_mock)
-        self.heart_sensor = HeartRateSensor(use_mock=use_mock)
+
 
     def check_hardware_connected(self):
         # 這裡可以根據實際硬體檢查方式實作
@@ -221,42 +222,17 @@ class FatigueMonitorUI:
         """定期更新传感器数据"""
         while self.running:
             try:
-                sensor_data = self.get_sensor_data()
+                sensor_data = get_sensor_data()
                 self.update_ui(sensor_data)
                 
             except Exception as e:
                 self.log_message(f"更新数据时发生错误: {str(e)}")
             time.sleep(0.1)
 
-    def get_sensor_data(self):
-        """获取传感器数据"""
-        face_ok = self.face_analyzer.update(show=False)
-        self.alcohol_sensor.update()
-        self.heart_sensor.update()
-    
-        return SensorData(
-            alcohol_level=self.alcohol_sensor.get_alcohol(),
-            is_alcohol=self.alcohol_sensor.is_over_limit(),
-            heart_rate=self.heart_sensor.get_latest(),
-            is_heart_rate_normal=self.heart_sensor.is_normal(),
-            fatigue_score=self.face_analyzer.get_fatigue_score() if face_ok else 0.0,
-            is_fatigued=self.face_analyzer.is_fatigued() if face_ok else False,
-            camera_ok=face_ok
-        )
-
-    def update_ui(self, sensor_data):
+    def update_ui(self, sensor_data:DataUnified):
         """更新UI界面"""
          # 更新数值显示
         self.update_ui_values(sensor_data)
-        # 更新臉部影像
-        frame = self.face_analyzer.get_frame()
-        if frame is not None:
-            self.update_face_image(frame)
-        else:
-            now = time.time()
-            if now - self.last_log_time > self.log_interval:
-                self.log_message("未取得影像 frame，跳過分析")
-                self.last_log_time = now
             
         # 更新狀態指示器
         self.update_status_indicators(sensor_data)
@@ -267,15 +243,15 @@ class FatigueMonitorUI:
         self.check_warnings(sensor_data)
 
 
-    def update_ui_values(self, sensor_data: SensorData):
+    def update_ui_values(self, sensor_data: DataUnified):
         """更新数值显示"""
-        self.value_labels["alcohol"].config(text=f"{sensor_data.alcohol_level:.3f}")
-        self.value_labels["heart"].config(text=str(sensor_data.heart_rate))
-        self.value_labels["fatigue"].config(text=f"{sensor_data.fatigue_score:.2f}")
-        self.value_labels["eye"].config(text="闭眼" if sensor_data.is_fatigued else "正常")
-        self.value_labels["mouth"].config(text="张开" if sensor_data.is_fatigued else "正常")
+        self.value_labels["alcohol"].config(text=f"{sensor_data.alcohol.alcohol_value:.3f}")
+        self.value_labels["heart"].config(text=str(sensor_data.heart.bpm_average))
+        self.value_labels["fatigue"].config(text=f"{sensor_data.fatigue.fatigue_score:.2f}")
+        self.value_labels["eye"].config(text="闭眼" if sensor_data.fatigue.is_fatigued else "正常")
+        self.value_labels["mouth"].config(text="张开" if sensor_data.fatigue.is_fatigued else "正常")
 
-    def update_status_indicators(self, sensor_data: SensorData):
+    def update_status_indicators(self, sensor_data: DataUnified):
         """更新状态指示灯"""
         # 攝像頭狀態
         self.set_indicator_color(self.status_indicators["camera"], "green" if sensor_data.camera_ok else "gray")
@@ -305,7 +281,7 @@ class FatigueMonitorUI:
             self.image_label.grid_remove()
 
 
-    def check_warnings(self, sensor_data: SensorData):
+    def check_warnings(self, sensor_data: DataUnified):
         """
         檢查並顯示警告消息
         """

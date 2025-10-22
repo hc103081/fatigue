@@ -1,12 +1,10 @@
 from dataclasses import dataclass
+from heart import HeartRateSensor
+from alcohol import AlcoholSensor
+from face_analyze import FaceAnalyzer
 
 @dataclass
-class SensorData:
-    alcohol_level: float = 0.0
-    is_alcohol: bool = False
-    heart_rate: int = 0
-    is_heart_rate_normal: bool = True
-    fatigue_score: float = 0.0
-    is_fatigued: bool = False
-    camera_ok: bool = True
-    
+class DataUnified:
+    alcohol: AlcoholSensor.AlcoholData
+    heart: HeartRateSensor.HeartData
+    fatigue: FaceAnalyzer.FatigueData
