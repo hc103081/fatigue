@@ -1,31 +1,60 @@
 import asyncio
 from flask import Flask
 import tkinter as tk
-from alcohol import AlcoholSensor
-from face_analyze import FaceAnalyzer
-from gpio import GPIO
-from heart import HeartRateSensor
 import threading
 import time
-from web_Api import WebApi
-from ngrok import ngrok_start
-from dataClass import DataUnified
-from line_Api import start_line_Api
-from line_bot import Line_bot
+from dataClass import DataUnified,ClassUnified
 from logs import Log
 import multiprocessing
+
+# program class
+from heart import HeartRateSensor
+from alcohol import AlcoholSensor
+from face_analyze import FaceAnalyzer
 from ui import FatigueMonitorUI
+from line_Api import Line_Api
+from line_bot import Line_bot
+from gpio import GPIO
+from ngrok import Ngrok
+from web_Api import WebApi
 
 _user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'
 
-data = DataUnified()
+data: DataUnified = None
+unified: ClassUnified = None
+
 
 def main():
-    GPIO.setmode(GPIO.BCM)
     app = Flask(__name__)
+    init_components(app)
+    unified.gpio.setmode(unified.gpio.BCM)
     
     try:
-        pass
+        thread_list: list[threading.Thread] = []
+        
+        # 啟動感測器更新執行緒
+        update_sensor_thread = threading.Thread(target=update_sensor)
+        thread_list.append(update_sensor_thread)
+        
+        # 啟動 Line Bot 執行緒
+        line_bot_thread = threading.Thread(target=unified.Line_bot.run)
+        thread_list.append(line_bot_thread)
+        
+        # 啟動 Web API 執行緒
+        web_api = threading.Thread(target=unified.web_api.run)
+        thread_list.append(web_api)
+        
+        
+        
+        
+        # 啟動所有執行緒
+        for thread in thread_list:
+            thread.start()
+        
+        # 等待所有執行緒
+        for thread in thread_list:
+            thread.join()
+        
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
 
@@ -39,64 +68,55 @@ def get_sensor_data()->DataUnified:
     global data
     return data
 
-def check_hardware_connected():
-    """
-    檢查硬體是否連接
-    Returns:
-        True: 硬體已連接
-        False: 硬體未連接
-    """
-    return False  # 預設為測試模式
-
 def init_components(app):
     """
     初始化組件
     Params:
         app (Flask): Flask 應用實例
     """
+    global data, unified
     use_mock = not check_hardware_connected()
     try:
-        global face_analyzer, alcohol_sensor,heart_sensor
-        global line_bot, web_api, ui, root
+        unified = ClassUnified(
+            # 初始化臉部分析器
+            fatigue = FaceAnalyzer(camera_index=0,
+                                    threshold=0.3),
+            
+            # 初始化酒精感測器
+            alcohol = AlcoholSensor(use_mock=use_mock,
+                                    limit=0.15),
+            
+            # 初始化心率感測器
+            heart = HeartRateSensor(use_mock=use_mock,
+                                    threshold_low=60,
+                                    threshold_high=100),
+            
+            # 初始化 Line API
+            line_api = Line_Api(use_mock=True,
+                                user_id=_user_id)
+        )
         
-        # 初始化臉部分析器
-        face_analyzer = FaceAnalyzer(camera_index=0,
-                                     threshold=0.3)
         
-        # 初始化酒精感測器
-        alcohol_sensor = AlcoholSensor(use_mock=use_mock,
-                                       limit=0.15)
+        data = DataUnified(
+            alcohol=unified.alcohol.get_data(),
+            heart=unified.heart.get_data(),
+            fatigue=unified.fatigue.get_data(),
+            line=unified.line_api.get_data()
+        )
         
-        # 初始化心率感測器
-        heart_sensor = HeartRateSensor(use_mock=use_mock,
-                                       threshold_low=60,
-                                       threshold_high=100)
+        # 初始化 ngrok
+        unified.ngrok = Ngrok()
         
         # 初始化 Line Bot
-        line_bot = Line_bot(app)
+        unified.Line_bot = Line_bot(app)
         
         # 初始化 Web API
-        web_api = WebApi(app)
+        unified.web_api = WebApi(app,unified)
         
         # 初始化 UI
         root = tk.Tk()
-        ui = FatigueMonitorUI(root)
+        unified.ui = FatigueMonitorUI(root,unified)
         
-    except Exception as e:
-        Log.logger.warning(f"發生錯誤: {e}")
-        raise e
-
-async def async_monitor():
-    """
-    非同步監控任務
-    持續監控感測器資料，並根據資料觸發相應的行動
-    """
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        Log.logger.debug("監控任務停止")
-        raise SystemExit
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
         raise e
@@ -105,12 +125,21 @@ def update_sensor():
     """
     更新感測器資料
     """
+    def run_sensor():
+        unified.alcohol.update()
+        unified.heart.update()
     try:
         while True:
-            alcohol_sensor.update()
-            heart_sensor.update()
-            face_analyzer.update()
+            sensor_thread = threading.Thread(target=run_sensor)
+            fatigue_thread = multiprocessing.Process(target=unified.fatigue.update)
 
+            sensor_thread.start()
+            fatigue_thread.start()
+
+            sensor_thread.join()
+            fatigue_thread.join()
+
+            refresh_sensor_data()
             time.sleep(1)
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
@@ -122,10 +151,19 @@ def refresh_sensor_data():
     """
     global data
     data = DataUnified(
-        alcohol=alcohol_sensor.get_data(),
-        heart=heart_sensor.get_data(),
-        fatigue=face_analyzer.get_data()
+        alcohol=unified.alcohol.get_data(),
+        heart=unified.heart.get_data(),
+        fatigue=unified.fatigue.get_data()
     )
+    
+def check_hardware_connected():
+    """
+    檢查硬體是否連接
+    Returns:
+        True: 硬體已連接
+        False: 硬體未連接
+    """
+    return False  # 預設為測試模式
 
 if __name__ == "__main__":
     main()

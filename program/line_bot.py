@@ -1,23 +1,21 @@
 from flask import Flask, json, request
 from logs import Log
-
+from main import get_sensor_data
+from dataClass import ClassUnified
 
 # 載入 LINE Message API 相關函式庫
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import TextSendMessage
 
-# 設定 LINE Bot 的存取權杖與密鑰
-access_token = 'ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU='
-secret = 'ccb3a53029a0ae2eda6fd90ed07e4fd0'
-
-line_bot_api = LineBotApi(access_token)
-
 class Line_bot:
-    """自訂 Line Bot 類別"""
-    
+    """
+    Line Bot 類別
+    """
     def __init__(self, app: Flask):
         self.app = app
+        self.data = get_sensor_data()
         self.app.add_url_rule("/", view_func=self.linebot, methods=['POST'])
+        self.line_bot_api = LineBotApi(self.data.line.access_token)
 
     def linebot(self):
         body = request.get_data(as_text=True)                    # 取得收到的訊息內容
@@ -25,7 +23,7 @@ class Line_bot:
             json_data = json.loads(body)                         # json 格式化訊息內容
 
             # 確認 secret 是否正確
-            handler = WebhookHandler(secret)
+            handler = WebhookHandler(self.data.line.secret)
             # 加入回傳的 headers
             signature = request.headers['X-Line-Signature']
             handler.handle(body, signature)                      # 綁定訊息回傳的相關資訊
@@ -41,13 +39,12 @@ class Line_bot:
             else:
                 reply = '你傳的不是文字呦～'
             Log.logger.debug(f'reply: {reply}')
-            line_bot_api.reply_message(tk, TextSendMessage(reply))  # 回傳訊息
+            self.line_bot_api.reply_message(tk, TextSendMessage(reply))  # 回傳訊息
         except Exception as e:
             # 如果發生錯誤，印出收到的內容
             Log.logger.warning(f"{body}+\n\n{e}")
         return 'OK'                                              # 驗證 Webhook 使用，不能省略
 
-    
+    def run(self):
+        self.app.run()
         
-
-    

@@ -2,21 +2,20 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import cv2
-from alcohol import AlcoholSensor
-from face_analyze import FaceAnalyzer
-from heart import HeartRateSensor
 import threading
 import time
-from dataClass import DataUnified
-from main import get_sensor_data
+from dataClass import ClassUnified,DataUnified
 
 class FatigueMonitorUI:
     """
     疲勞監控UI類別\n
     用於顯示感測器資料與控制監控流程
     """
-    def __init__(self, root:tk.Tk):
+
+    def __init__(self, root:tk.Tk,unified:ClassUnified,data:DataUnified):
         self.root = root
+        self.unified = unified
+        self.data = data
         self.setup_window()
         self.init_sensors()
         self.create_ui()
@@ -254,14 +253,14 @@ class FatigueMonitorUI:
     def update_status_indicators(self, sensor_data: DataUnified):
         """更新状态指示灯"""
         # 攝像頭狀態
-        self.set_indicator_color(self.status_indicators["camera"], "green" if sensor_data.camera_ok else "gray")
+        self.set_indicator_color(self.status_indicators["camera"], "green" if sensor_data.fatigue.is_camera_open else "gray")
 
         # 酒精狀態
-        alcohol_color = "yellow" if getattr(self.alcohol_sensor, "is_test_data", False) else "green"
+        alcohol_color = "yellow" if getattr(sensor_data.alcohol.is_test_data, "is_test_data", False) else "green"
         self.set_indicator_color(self.status_indicators["alcohol"], alcohol_color)
 
         # 心率狀態
-        heart_color = "yellow" if getattr(self.heart_sensor, "is_test_data", False) else "green"
+        heart_color = "yellow" if getattr(sensor_data.heart.is_test_data, "is_test_data", False) else "green"
         self.set_indicator_color(self.status_indicators["heart"], heart_color)
 
         # 疲劳状态
@@ -286,11 +285,11 @@ class FatigueMonitorUI:
         檢查並顯示警告消息
         """
         warnings = []
-        if sensor_data.is_alcohol:
+        if sensor_data.alcohol.is_over_limit:
             warnings.append("酒精浓度过高!")
-        if sensor_data.is_heart_rate_normal:
+        if not sensor_data.heart.is_heart_rate_normal:
             warnings.append("心率异常!")
-        if sensor_data.is_fatigued:
+        if sensor_data.fatigue.is_fatigued:
             warnings.append("疲劳警报!")
 
         warning_text = " | ".join(warnings) if warnings else "系统正常"

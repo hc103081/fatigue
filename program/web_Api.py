@@ -2,17 +2,16 @@ from dataclasses import asdict
 import cv2
 from flask import Flask, Response, jsonify
 from logs import Log
-from dataClass import SensorData
-from ngrok import ngrok_start
+from dataClass import DataUnified, ClassUnified
 import threading
-from camera import Camera
+from main import get_sensor_data
 
 class WebApi():
     """Web API 服務"""
-    def __init__(self, app: Flask):
+    def __init__(self, app: Flask,unified:ClassUnified):
         super().__init__()
-        self.camera = Camera()
         self.app = app
+        self.unified = unified
         self.app.add_url_rule('/get_dataClass',
                               view_func=self.get_dataClass,
                               methods=['GET'])
@@ -22,15 +21,7 @@ class WebApi():
 
     def get_dataClass(self):
         # 這裡取得感測資料
-        data = SensorData(
-            alcohol_level=0.05,
-            is_alcohol=True,
-            heart_rate=85,
-            is_heart_rate_normal=True,
-            fatigue_score=0.3,
-            is_fatigued=False,
-            camera_ok=True
-        )
+        data = get_sensor_data()
         return jsonify(asdict(data))
     
     def video_feed(self):
@@ -38,7 +29,7 @@ class WebApi():
 
     def get_frame_encoded(self):
         while True:
-            frame = self.camera.get_frame()
+            frame = self.unified.fatigue.get_frame()
             if frame is None:
                 break
             else:
@@ -47,16 +38,11 @@ class WebApi():
                 yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
     
-    def __enter__(self):
-        return super().__enter__()
-    def __exit__(self, exc_type, exc_value, traceback):
-        super().__exit__(exc_type, exc_value, traceback)
+    def run(self):
+        """
+        啟動 Web API 伺服器
+        """
+        self.app.run()
     
 if __name__ == "__main__":
-    app = Flask(__name__)
-    with WebApi(app) as web_thread:
-        app_thread = threading.Thread(target=web_thread.app.run)
-        app_thread.start()
-    
-        ngrok_thread = threading.Thread(target=ngrok_start)
-        ngrok_thread.start()
+    pass
