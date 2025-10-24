@@ -9,7 +9,7 @@ class HeartRateSensor:
     """
     @dataclass
     class HeartData:
-        bpm_lastest: int             # 最新一次的心率讀數
+        bpm_latest: int             # 最新一次的心率讀數
         bpm_average: float           # 心率讀數的平均值
         is_heart_rate_normal: bool   # 心率是否正常
         queue_size: int              # 用於存儲心率讀數的隊列大小
@@ -29,7 +29,7 @@ class HeartRateSensor:
             threshold_high: 心率異常判斷的上限值
         """
         self.data = self.HeartData(
-            bpm_lastest=0,
+            bpm_latest=0,
             bpm_average=0.0,
             is_heart_rate_normal=True,
             queue_size=10,
@@ -59,7 +59,7 @@ class HeartRateSensor:
             回傳心率感測器資料
         """
         data = HeartRateSensor.HeartData(
-            bpm_lastest=self.get_latest(),
+            bpm_latest=self.get_latest(),
             bpm_average=self.get_average(),
             is_heart_rate_normal=self.is_normal(),
             queue_size=self.data.queue_size,
