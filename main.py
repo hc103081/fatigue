@@ -134,8 +134,7 @@ def refresh_sensor_data():
     """
     刷新感測器資料
     """
-    global data
-    data = DataUnified(
+    unified.data = DataUnified(
         alcohol=unified.alcohol.get_data(),
         heart=unified.heart.get_data(),
         fatigue=unified.fatigue.get_data(),
