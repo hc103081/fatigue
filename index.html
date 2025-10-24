@@ -72,9 +72,9 @@
           return;
         }
 
-        document.getElementById('fatigue').innerText = data.fatigue_score;
-        document.getElementById('heart_rate').innerText = (data.heart_rate ?? '-') + ' 次/分';
-        document.getElementById('alcohol_level').innerText = (data.alcohol_level ?? '-') + ' 度';
+        document.getElementById('fatigue').innerText = (data.fatigue.fatigue_score ?? '-') + ' 分';
+        document.getElementById('heart_rate').innerText = (data.heart.heart_rate ?? '-') + ' 次/分';
+        document.getElementById('alcohol_level').innerText = (data.alcohol.alcohol_level ?? '-') + ' 度';
         document.getElementById('error-message').innerText = '';
       } catch (error) {
         document.getElementById('error-message').innerText = '❌ 無法取得資料，請稍後再試。';

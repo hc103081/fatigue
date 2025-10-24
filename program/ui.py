@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 import cv2
 import threading
 import time
-from dataClass import ClassUnified,DataUnified
+from .dataClass import ClassUnified,DataUnified
 
 class FatigueMonitorUI:
     """
@@ -12,10 +12,10 @@ class FatigueMonitorUI:
     用於顯示感測器資料與控制監控流程
     """
 
-    def __init__(self, root:tk.Tk,unified:ClassUnified,data:DataUnified):
+    def __init__(self, root:tk.Tk,unified:ClassUnified):
         self.root = root
         self.unified = unified
-        self.data = data
+        self.data = unified.data
         self.setup_window()
         self.init_sensors()
         self.create_ui()
@@ -221,7 +221,7 @@ class FatigueMonitorUI:
         """定期更新传感器数据"""
         while self.running:
             try:
-                sensor_data = get_sensor_data()
+                sensor_data = self.unified.data
                 self.update_ui(sensor_data)
                 
             except Exception as e:

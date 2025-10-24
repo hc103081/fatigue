@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from queue import Queue
-from logs import Log
+from .logs import Log
 
 
 class HeartRateSensor:
@@ -25,6 +25,8 @@ class HeartRateSensor:
         threshold_high: 心率異常判斷的上限值
         Params:
             use_mock: 是否使用模擬資料
+            threshold_low: 心率異常判斷的下限值
+            threshold_high: 心率異常判斷的上限值
         """
         self.data = self.HeartData(
             bpm_lastest=0,

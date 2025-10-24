@@ -1,10 +1,9 @@
 from dataclasses import asdict
 import cv2
 from flask import Flask, Response, jsonify
-from logs import Log
-from dataClass import DataUnified, ClassUnified
+from .logs import Log
+from .dataClass import DataUnified, ClassUnified
 import threading
-from main import get_sensor_data
 
 class WebApi():
     """Web API 服務"""
@@ -21,7 +20,7 @@ class WebApi():
 
     def get_dataClass(self):
         # 這裡取得感測資料
-        data = get_sensor_data()
+        data = self.unified.data
         return jsonify(asdict(data))
     
     def video_feed(self):

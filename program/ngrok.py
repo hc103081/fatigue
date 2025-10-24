@@ -2,13 +2,13 @@ import subprocess
 import shlex
 import time
 import signal
-from logs import Log
+from .logs import Log
 
 class Ngrok:
     def __init__(self, ngrok_bin: str = r"C:\vscode\ngrok\ngrok.exe"):
         self.ngrok_bin = ngrok_bin
     
-    def ngrok_start(self):
+    def run(self):
         """
         啟動 ngrok 並監看輸出以取得 public url
         """

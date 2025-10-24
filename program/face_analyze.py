@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import time
-from camera import Camera
-from logs import Log
+from .logs import Log
+from .camera import Camera
 import dlib
 import numpy as np
 import cv2
@@ -24,6 +24,7 @@ class FaceAnalyzer(Camera):
             camera_index: 攝影機索引
             threshold: 疲勞閾值
         """
+        super().__init__(camera_index)
         self.data = FaceAnalyzer.FatigueData(
             fatigue_score=0.0,
             is_fatigued=False,
@@ -33,8 +34,6 @@ class FaceAnalyzer(Camera):
             threshold=threshold
         )
         
-        super().__init__(camera_index)
-        
         # 載入 dlib 的臉部偵測器與關鍵點預測模型
         self.detector = dlib.get_frontal_face_detector()
         
@@ -43,6 +42,8 @@ class FaceAnalyzer(Camera):
         
         # 記錄日志的時間間隔，單位：秒
         self.log_interval = 10  
+        
+        self.last_log_time = time.time()
 
     def get_data(self):
         """

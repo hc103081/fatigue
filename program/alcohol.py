@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import random
-from logs import Log
+from .logs import Log
 
 class AlcoholSensor:
     """

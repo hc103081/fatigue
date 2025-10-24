@@ -1,51 +1,36 @@
-import asyncio
 from flask import Flask
 import tkinter as tk
 import threading
 import time
-from dataClass import DataUnified,ClassUnified
-from logs import Log
-import multiprocessing
 
 # program class
-from heart import HeartRateSensor
-from alcohol import AlcoholSensor
-from face_analyze import FaceAnalyzer
-from ui import FatigueMonitorUI
-from line_Api import Line_Api
-from line_bot import Line_bot
-from gpio import GPIO
-from ngrok import Ngrok
-from web_Api import WebApi
+from program import *
 
-_user_id = 'U44a5e3e3cf9c8835a64bb1273b08f457'
-
-data: DataUnified = None
 unified: ClassUnified = None
-
 
 def main():
     app = Flask(__name__)
+    GPIO.setmode(GPIO.BCM)
+
     init_components(app)
-    unified.gpio.setmode(unified.gpio.BCM)
-    
+        
     try:
         thread_list: list[threading.Thread] = []
         
         # 啟動感測器更新執行緒
-        update_sensor_thread = threading.Thread(target=update_sensor)
+        update_sensor_thread = threading.Thread(target=update_sensor_data)
         thread_list.append(update_sensor_thread)
         
         # 啟動 Line Bot 執行緒
-        line_bot_thread = threading.Thread(target=unified.Line_bot.run)
+        line_bot_thread = threading.Thread(target=line_bot.run)
         thread_list.append(line_bot_thread)
         
         # 啟動 Web API 執行緒
-        web_api = threading.Thread(target=unified.web_api.run)
-        thread_list.append(web_api)
+        web_api_thread = threading.Thread(target=web_api.run)
+        thread_list.append(web_api_thread)
         
-        
-        
+        ngrok_thread = threading.Thread(target=ngrok.run)
+        thread_list.append(ngrok_thread)
         
         # 啟動所有執行緒
         for thread in thread_list:
@@ -58,15 +43,15 @@ def main():
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
 
-
-def get_sensor_data()->DataUnified:
-    """
-    取得感測器資料
-    Returns:
-        DataUnified: 包含感測器資料的 DataUnified 物件
-    """
-    global data
-    return data
+class Main:
+    def get_sensor_data()->DataUnified:
+        """
+        取得感測器資料
+        Returns:
+            DataUnified: 包含感測器資料的 DataUnified 物件
+        """
+        global data
+        return data
 
 def init_components(app):
     """
@@ -74,7 +59,7 @@ def init_components(app):
     Params:
         app (Flask): Flask 應用實例
     """
-    global data, unified
+    global unified, line_bot, web_api, ui, ngrok
     use_mock = not check_hardware_connected()
     try:
         unified = ClassUnified(
@@ -92,36 +77,36 @@ def init_components(app):
                                     threshold_high=100),
             
             # 初始化 Line API
-            line_api = Line_Api(use_mock=True,
-                                user_id=_user_id)
+            line_api = Line_Api(),
+            
+            data = None
         )
         
         
-        data = DataUnified(
+        unified.data = DataUnified(
             alcohol=unified.alcohol.get_data(),
             heart=unified.heart.get_data(),
             fatigue=unified.fatigue.get_data(),
-            line=unified.line_api.get_data()
         )
         
         # 初始化 ngrok
-        unified.ngrok = Ngrok()
+        ngrok = Ngrok()
         
         # 初始化 Line Bot
-        unified.Line_bot = Line_bot(app)
+        line_bot = Line_bot(app,unified)
         
         # 初始化 Web API
-        unified.web_api = WebApi(app,unified)
+        web_api = WebApi(app,unified)
         
         # 初始化 UI
-        root = tk.Tk()
-        unified.ui = FatigueMonitorUI(root,unified)
+        # root = tk.Tk()
+        # ui = FatigueMonitorUI(root,unified)
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
         raise e
 
-def update_sensor():
+def update_sensor_data():
     """
     更新感測器資料
     """
@@ -131,7 +116,7 @@ def update_sensor():
     try:
         while True:
             sensor_thread = threading.Thread(target=run_sensor)
-            fatigue_thread = multiprocessing.Process(target=unified.fatigue.update)
+            fatigue_thread = threading.Thread(target=unified.fatigue.update)
 
             sensor_thread.start()
             fatigue_thread.start()
@@ -153,7 +138,7 @@ def refresh_sensor_data():
     data = DataUnified(
         alcohol=unified.alcohol.get_data(),
         heart=unified.heart.get_data(),
-        fatigue=unified.fatigue.get_data()
+        fatigue=unified.fatigue.get_data(),
     )
     
 def check_hardware_connected():

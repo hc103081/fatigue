@@ -1,7 +1,6 @@
 from flask import Flask, json, request
-from logs import Log
-from main import get_sensor_data
-from dataClass import ClassUnified
+from .logs import Log
+from .dataClass import ClassUnified
 
 # 載入 LINE Message API 相關函式庫
 from linebot import LineBotApi, WebhookHandler
@@ -11,11 +10,11 @@ class Line_bot:
     """
     Line Bot 類別
     """
-    def __init__(self, app: Flask):
+    def __init__(self, app: Flask, unified: ClassUnified):
         self.app = app
-        self.data = get_sensor_data()
+        self.line_data = unified.line_api.data
         self.app.add_url_rule("/", view_func=self.linebot, methods=['POST'])
-        self.line_bot_api = LineBotApi(self.data.line.access_token)
+        self.line_bot_api = LineBotApi(self.line_data.access_token)
 
     def linebot(self):
         body = request.get_data(as_text=True)                    # 取得收到的訊息內容
@@ -23,7 +22,7 @@ class Line_bot:
             json_data = json.loads(body)                         # json 格式化訊息內容
 
             # 確認 secret 是否正確
-            handler = WebhookHandler(self.data.line.secret)
+            handler = WebhookHandler(self.line_data.secret)
             # 加入回傳的 headers
             signature = request.headers['X-Line-Signature']
             handler.handle(body, signature)                      # 綁定訊息回傳的相關資訊
