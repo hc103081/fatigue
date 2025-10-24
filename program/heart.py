@@ -92,8 +92,7 @@ class HeartRateSensor:
         Returns:
             回傳所有心率讀數的平均值
         """
-        return sum(self.heart_queue.queue) / len(self.heart_queue.queue) if not self.heart_queue.empty() else 0
-    # 判斷是否有異常
+        return round(sum(self.heart_queue.queue) / len(self.heart_queue.queue), 1) if not self.heart_queue.empty() else 0    # 判斷是否有異常
     def is_normal(self):
         """
         Params:
