@@ -1,4 +1,3 @@
-from __future__ import annotations
 from dataclasses import dataclass
 
 # program class
@@ -6,8 +5,6 @@ from .heart import HeartRateSensor
 from .alcohol import AlcoholSensor
 from .face_analyze import FaceAnalyzer
 from .line_Api import Line_Api
-from .ngrok import Ngrok
-from .gpio import GPIO
 
 @dataclass
 class DataUnified:

@@ -59,7 +59,7 @@ def init_components(app):
     Params:
         app (Flask): Flask 應用實例
     """
-    global unified, line_bot, web_api, ui, ngrok
+    global unified, line_bot, web_api, ngrok
     use_mock = not check_hardware_connected()
     try:
         unified = ClassUnified(
@@ -97,10 +97,6 @@ def init_components(app):
         
         # 初始化 Web API
         web_api = WebApi(app,unified)
-        
-        # 初始化 UI
-        # root = tk.Tk()
-        # ui = FatigueMonitorUI(root,unified)
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
