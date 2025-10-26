@@ -1,6 +1,5 @@
 from flask import Flask, jsonify
 import requests
-from program.dataClass import SensorData
 from flask_cors import CORS
 
 app = Flask(__name__)

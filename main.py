@@ -1,7 +1,6 @@
 from flask import Flask
 import threading
 import time
-from flask_cors import CORS
 
 # program class
 from program import *
@@ -10,7 +9,6 @@ unified: ClassUnified = None
 
 def main():
     app = Flask(__name__)
-    CORS(app)
     GPIO.setmode(GPIO.BCM)
 
     init_components(app)
