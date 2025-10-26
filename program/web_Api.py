@@ -3,7 +3,6 @@ import cv2
 from flask import Flask, Response, jsonify
 from .logs import Log
 from .dataClass import DataUnified, ClassUnified
-import threading
 
 class WebApi():
     """Web API 服務"""
@@ -20,23 +19,38 @@ class WebApi():
 
     def get_dataClass(self):
         # 這裡取得感測資料
-        data = self.unified.data
-        return jsonify(asdict(data))
+        try:
+            data = self.unified.data
+            return jsonify({"success": True, "data": asdict(data)})
+        except Exception as e:
+            Log.logger.warning(f"get_dataClass error: {e}")
+            return jsonify({"success": False, "error": str(e)}), 500
     
     def video_feed(self):
-        return Response(self.get_frame_encoded(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
+        try:
+            return Response(self.get_frame_encoded(), mimetype='multipart/x-mixed-replace; boundary=frame')
+        except Exception as e:
+            Log.logger.warning(f"video_feed error: {e}")
+            return jsonify({"success": False, "error": str(e)}), 500
+        
     def get_frame_encoded(self):
         while True:
-            frame = self.unified.fatigue.get_frame()
-            if frame is None:
-                break
-            else:
+            try:
+                frame = self.unified.fatigue.get_frame()
+                if frame is None:
+                    Log.logger.warning("未取得影像 frame，結束串流")
+                    break
                 ret, buffer = cv2.imencode('.jpg', frame)
+                if not ret:
+                    Log.logger.warning("影像編碼失敗")
+                    continue
                 frame = buffer.tobytes()
                 yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            except Exception as e:
+                Log.logger.warning(f"串流錯誤: {e}")
+                break
+            
     def run(self):
         """
         啟動 Web API 伺服器

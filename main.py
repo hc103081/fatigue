@@ -1,7 +1,7 @@
 from flask import Flask
-import tkinter as tk
 import threading
 import time
+from flask_cors import CORS
 
 # program class
 from program import *
@@ -10,6 +10,7 @@ unified: ClassUnified = None
 
 def main():
     app = Flask(__name__)
+    CORS(app)
     GPIO.setmode(GPIO.BCM)
 
     init_components(app)
@@ -42,16 +43,6 @@ def main():
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
-
-class Main:
-    def get_sensor_data()->DataUnified:
-        """
-        取得感測器資料
-        Returns:
-            DataUnified: 包含感測器資料的 DataUnified 物件
-        """
-        global data
-        return data
 
 def init_components(app):
     """
