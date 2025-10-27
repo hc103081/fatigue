@@ -21,10 +21,16 @@ class WebApi():
         # 這裡取得感測資料
         try:
             data = self.unified.data
-            return jsonify({"success": True, "data": asdict(data)})
+            if data is None:
+                return jsonify({"success": False,
+                                "error": "data is None"}), 500
+            else:
+                return jsonify({"success": True,
+                                "data": asdict(data)})
         except Exception as e:
             Log.logger.warning(f"get_dataClass error: {e}")
-            return jsonify({"success": False, "error": str(e)}), 500
+            return jsonify({"success": False,
+                            "error": str(e)}), 500
     
     def video_feed(self):
         try:

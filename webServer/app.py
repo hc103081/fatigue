@@ -13,12 +13,21 @@ def get_classdata():
     try:
         pi_response = requests.get(pi_url, timeout=3)
         pi_data = pi_response.json()
-        return jsonify(pi_data)
+        if not pi_data["success"]:
+            return jsonify({
+                "success": False,
+                "error": "樹莓派回傳失敗",
+            }), 500
+        else:
+            return jsonify({
+                "success": True,
+                "data":pi_data["data"]
+            })
     except Exception as e:
         # 回傳明確的錯誤訊息
         return jsonify({
-            "error": "樹莓派不在線",
-            "detail": str(e)
+            "success": False,
+            "error": f"樹莓派不在線：{str(e)}",
         }), 500
         
 @app.route('/video_feed', methods=['GET'])
