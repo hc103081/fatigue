@@ -61,7 +61,7 @@ class WebApi():
         """
         啟動 Web API 伺服器
         """
-        self.app.run()
+        self.app.run(threaded=True)
     
 if __name__ == "__main__":
     pass

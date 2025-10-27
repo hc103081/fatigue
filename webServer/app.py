@@ -47,4 +47,4 @@ def video_feed():
         return f"串流取得失敗: {str(e)}", 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(threaded=True)
