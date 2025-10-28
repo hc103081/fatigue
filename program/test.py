@@ -186,12 +186,24 @@ def flask_test():
         line_thread = threading.Thread(target=Line_bot.app.run)
         line_thread.start()
         
+def alcohol_test():
+    from gpiozero import MCP3008
+    import time
+
+    # MCP3008 的 CH0 通道
+    sensor = MCP3008(channel=0)
+
+    while True:
+        value = sensor.value  # 取得 0~1 之間的類比值
+        print(f"MQ3感測器數值: {value:.3f}")
+        time.sleep(1)
         
 if __name__ == "__main__":
     # line_test()
     # face_analyze_test2()
     # face_analyze_test()
     # flask_test()
+    alcohol_test()
     pass
     
 
