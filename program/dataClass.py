@@ -1,12 +1,28 @@
 from dataclasses import dataclass
 
+# program class
+from .heart import HeartRateSensor
+from .alcohol import AlcoholSensor
+from .face_analyze import FaceAnalyzer
+from .line_Api import Line_Api
+
 @dataclass
-class SensorData:
-    alcohol_level: float = 0.0
-    is_alcohol: bool = False
-    heart_rate: int = 0
-    is_heart_rate_normal: bool = True
-    fatigue_score: float = 0.0
-    is_fatigued: bool = False
-    camera_ok: bool = True
+class DataUnified:
+    """
+    整合感測器資料的類別
+    """
+    alcohol: AlcoholSensor.AlcoholData
+    heart: HeartRateSensor.HeartData
+    fatigue: FaceAnalyzer.FatigueData
+    
+@dataclass
+class ClassUnified:
+    """
+    整合感測器類別的類別
+    """
+    data: DataUnified
+    alcohol: AlcoholSensor
+    heart: HeartRateSensor
+    fatigue: FaceAnalyzer
+    line_api: Line_Api
     

@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 import time
-from camera import Camera
-from logs import Log
+from .logs import Log
+from .camera import Camera
 import dlib
 import numpy as np
 import cv2
@@ -8,12 +9,30 @@ import cv2
 class FaceAnalyzer(Camera):
     """臉部分析模組"""
     
-    def __init__(self, camera_index=0):
+    @dataclass
+    class FatigueData(Camera.CameraData):
+        fatigue_score: float    # 疲勞值
+        is_fatigued: bool       # 是否疲勞
+        ear: float              # 眼睛縱橫比
+        mar: float              # 嘴巴開合比
+        threshold: float        # 疲勞閾值
+    
+    def __init__(self, camera_index=0, threshold=0.3):
         """
         初始化臉部分析器
+        Params:
+            camera_index: 攝影機索引
+            threshold: 疲勞閾值
         """
-        
         super().__init__(camera_index)
+        self.data = FaceAnalyzer.FatigueData(
+            fatigue_score=0.0,
+            is_fatigued=False,
+            ear=0.0,
+            mar=0.0,
+            is_camera_open=self.data.is_camera_open,
+            threshold=threshold
+        )
         
         # 載入 dlib 的臉部偵測器與關鍵點預測模型
         self.detector = dlib.get_frontal_face_detector()
@@ -24,13 +43,58 @@ class FaceAnalyzer(Camera):
         # 記錄日志的時間間隔，單位：秒
         self.log_interval = 10  
         
-        # 疲勞值
-        self.fatigue_score = 0.0
+        self.last_log_time = time.time()
+
+    def get_data(self):
+        """
+        取得臉部分析數據
+        Returns:
+            FaceAnalyzer.FatigueData: 臉部分析數據
+        """
+        data = FaceAnalyzer.FatigueData(
+            fatigue_score=self.get_fatigue_score(),
+            is_fatigued=self.is_fatigued(),
+            ear=self.data.ear,
+            mar=self.data.mar,
+            threshold=self.data.threshold,
+            is_camera_open=self.data.is_camera_open,
+        )
+        return data
+
+    def update(self,show=False):
+        """
+        更新影像分析數據
+        """
+        frame = self.get_frame()
+        if frame is None:
+            now = time.time()
+             
+            # 只在超過 log_interval 秒才記錄
+            if now - self.last_log_time > self.log_interval:  
+                Log.logger.warning("未取得影像 frame，跳過分析")
+                self.data.is_camera_open = False
+                self.last_log_time = now
+            return False
+        self.data.is_camera_open = True
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.equalizeHist(gray)
+        faces = self.detector(gray)
         
-        # 眼睛縱橫比
-        self.ear = 0.0
-        # 嘴巴開合比
-        self.mar = 0.0
+        for face in faces:
+            # 提取臉部關鍵點
+            landmarks = self.predictor(gray, face)
+            
+            # 提取眼睛縱橫比和嘴巴開合比
+            self.data.ear,self.data.mar = self.get_ear_mar(landmarks)
+            # 計算疲勞值
+            self.data.fatigue_score = self.get_fatigue_score()
+            self.data.is_fatigued = self.is_fatigued()
+            
+            # 顯示臉部關鍵點
+            if show:
+                self.show(frame,landmarks)
+        
+        return True
 
     def show(self,frame,landmarks):
         """
@@ -39,8 +103,6 @@ class FaceAnalyzer(Camera):
         if frame is None:
             Log.logger.warning("未取得影像 frame，跳過顯示")
             return
-        
-        fatigue_state = self.is_fatigued()
 
         # 畫左眼 (特徵點 36–41)
         for i in range(36, 42):
@@ -58,8 +120,8 @@ class FaceAnalyzer(Camera):
             cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
 
         # 顯示結果W
-        text = f"Fatigue Score: {self.fatigue_score:.2f} | Fatigued: {fatigue_state}"
-        cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if fatigue_state else (0, 255, 0), 2)
+        text = f"Fatigue Score: {self.data.fatigue_score:.2f} | Fatigued: {self.data.is_fatigued}"
+        cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if self.data.is_fatigued else (0, 255, 0), 2)
             
         
         # 顯示結果
@@ -68,36 +130,6 @@ class FaceAnalyzer(Camera):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             pass
             
-    def update(self,show=False):
-        """
-        更新影像分析數據
-        """
-        frame = self.get_frame()
-        if frame is None:
-            now = time.time()
-             
-            # 只在超過 log_interval 秒才記錄
-            if now - self.last_log_time > self.log_interval:  
-                Log.logger.warning("未取得影像 frame，跳過分析")
-                self.last_log_time = now
-            return False
-
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        gray = cv2.equalizeHist(gray)
-        faces = self.detector(gray)
-        
-        for face in faces:
-            # 提取臉部關鍵點
-            landmarks = self.predictor(gray, face)
-            
-            # 提取眼睛縱橫比和嘴巴開合比
-            self.ear, self.mar = self.get_ear_mar(landmarks)
-            # 計算疲勞值
-            self.fatigue_score = self.get_fatigue_score()
-            if show:
-                self.show(frame,landmarks)
-        
-        return True
     
     def compute_ear(self,eye_points):
         """
@@ -136,10 +168,18 @@ class FaceAnalyzer(Camera):
         回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
         """
         # 疲勞值公式：MAR - EAR（可依需求調整權重）
-        fatigue_score = self.mar - self.ear
+        fatigue_score = self.data.mar - self.data.ear
         return fatigue_score
+    
+    def set_threshold(self,threshold):
+        """
+        設定疲勞值閾值
+        Params:
+            threshold: 疲勞值閾值
+        """
+        self.data.threshold = threshold
 
-    def is_fatigued(self, threshold=0.3):
+    def is_fatigued(self):
         """
         回傳是否疲勞（根據疲勞值是否超過閾值）
         Params:
@@ -147,8 +187,7 @@ class FaceAnalyzer(Camera):
         Returns:
             如果疲勞值超過 threshold 則回傳 True
         """
-        fatigue_score = self.get_fatigue_score()
-        return (fatigue_score > threshold)
+        return (self.get_fatigue_score() > self.data.threshold)
         
         
     def __enter__(self):
@@ -156,4 +195,3 @@ class FaceAnalyzer(Camera):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
-        pass

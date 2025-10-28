@@ -1,35 +1,51 @@
+from dataclasses import dataclass
 import time
 import cv2
-from logs import Log
+from .logs import Log
 import os
 
 class Camera:
     """攝像頭模組"""
+    _instance = None  # 單例實例變量
+    
+    @dataclass
+    class CameraData():
+        """
+        攝像頭數據
+        """
+        is_camera_open: bool
+        
+    
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(Camera, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
-    def __init__(self, camera_index=0):
+    def __init__(self, camera_index=0,frame_width=640,frame_height=480):
         """ 
         初始化攝像頭 
         Params:
             camera_index: 攝像頭索引 預設為 0      
         """
+        self.data = self.CameraData(
+            is_camera_open=False
+        )
         os.environ["QT_QPA_PLATFORM"] = "xcb"
         self.camera_index = camera_index
-        self.last_log_time = 0  # 新增：記錄上一次 log 的時間
-        
-        # 記錄日志的時間間隔，單位：秒
-        self.log_interval = 10  
+        self.camera_last_log_time = 0      # 新增：記錄上一次 log 的時間
+        self.camera_log_interval = 10      # 記錄日志的時間間隔，單位：秒
 
         try:
             self.cap = cv2.VideoCapture(camera_index)  # 初始化攝像頭
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
+            
             
         except cv2.error:
             raise Exception("無法初始化攝像頭")
-        
-        
-     # 讀取一幀影像
+
+    # 讀取一幀影像
     def get_frame(self):
         """ 
         讀取並回傳一幀影像\n
@@ -38,12 +54,22 @@ class Camera:
         ret, frame = self.cap.read()
         if not ret:
             now = time.time()
-            # 只在超過 log_interval 秒才記錄
-            if now - self.last_log_time > self.log_interval:
+            # 只在超過 camera_log_interval 秒才記錄
+            if now - self.camera_last_log_time > self.camera_log_interval:
                 Log.logger.warning("未取得影像 frame，跳過分析")
-                self.last_log_time = now
+                self.camera_last_log_time = now
             return None
         return frame
+    
+    def set_frame_size(self,frame_width,frame_height):
+        """
+        設定攝像頭影像尺寸
+        Params:
+            frame_width: 影像寬度
+            frame_height: 影像高度
+        """
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
     
     # 關閉攝像頭
     def close(self):

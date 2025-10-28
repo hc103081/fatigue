@@ -173,12 +173,25 @@ def face_analyze_test():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                 
+def flask_test():
+    from web_Api import WebApi
+    import threading
+    from ngrok import ngrok_start
+    from line_bot import Line_bot
 
+    with WebApi() as web_thread:
+        app_thread = threading.Thread(target=web_thread.app.run)
+        app_thread.start()
+        
+        line_thread = threading.Thread(target=Line_bot.app.run)
+        line_thread.start()
+        
+        
 if __name__ == "__main__":
     # line_test()
-    face_analyze_test2()
+    # face_analyze_test2()
     # face_analyze_test()
-    
+    # flask_test()
     pass
     
 

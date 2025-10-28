@@ -6,30 +6,36 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background-color: #f0f0f0;
       padding: 20px;
-    }
-    h2 {
-      color: #333;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
     }
     .data-block {
       background-color: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .label {
       font-weight: bold;
-      margin-bottom: 5px;
+      color: #555;
+      margin-bottom: 8px;
+      display: block;
     }
     .value {
-      font-size: 1.2em;
-      color: #007bff;
+      font-size: 1.4em;
+      color: #009688; /* Teal color */
     }
     .error {
-      color: red;
+      color: #f44336; /* Red color */
       font-weight: bold;
+    }
+    #video-stream {
+      width: 100%; /* Make video responsive */
+      border: none;
+      height: 200px;
     }
   </style>
 </head>
@@ -37,45 +43,51 @@
   <h2>🚗 疲勞駕駛監測系統</h2>
 
   <div id="fatigue-block" class="data-block">
-    <div class="label">疲勞指數：</div>
-    <div id="fatigue" class="value">載入中...</div>
+    <span class="label">疲勞指數：</span>
+    <span id="fatigue" class="value">載入中...</span>
   </div>
 
-  <div id="speed-block" class="data-block">
-    <div class="label">車速：</div>
-    <div id="speed" class="value">載入中...</div>
+  <div id="heart-rate-block" class="data-block">
+    <span class="label">心率：</span>
+    <span id="heart_rate" class="value">載入中...</span>
   </div>
 
-  <div id="drive-time-block" class="data-block">
-    <div class="label">駕駛時間：</div>
-    <div id="drive_time" class="value">載入中...</div>
+  <div id="alcohol-level-block" class="data-block">
+    <span class="label">酒精濃度：</span>
+    <span id="alcohol_level" class="value">載入中...</span>
+  </div>
+
+  <div id="video-block" class="data-block">
+    <span class="label">即時影像：</span>
+    <iframe id="video-stream" src="https://fatigue-m68t.onrender.com/video_feed"></iframe>
   </div>
 
   <div id="error-message" class="error"></div>
 
   <script>
-    async function fetchFatigueData() {
+   async function fetchFatigueData() {
       try {
-        const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass');
+        const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass', { method: 'GET' });
         const data = await response.json();
+        console.log(data);
 
-        if (data.error) {
+        if (data.success === false) {
           document.getElementById('error-message').innerText = '❌ ' + data.error;
           document.getElementById('fatigue').innerText = '-';
-          document.getElementById('speed').innerText = '-';
-          document.getElementById('drive_time').innerText = '-';
+          document.getElementById('heart_rate').innerText = '-';
+          document.getElementById('alcohol_level').innerText = '-';
           return;
         }
-
-        document.getElementById('fatigue').innerText = data.fatigue;
-        document.getElementById('speed').innerText = data.speed + ' km/h';
-        document.getElementById('drive_time').innerText = data.drive_time + ' 分鐘';
+        var sensor_data = data.data;
+        document.getElementById('fatigue').innerText = (sensor_data.fatigue.fatigue_score ?? '-') + ' 分';
+        document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average ?? '-') + ' 次/分';
+        document.getElementById('alcohol_level').innerText = (sensor_data.alcohol.alcohol_value ?? '-') + ' 度';
         document.getElementById('error-message').innerText = '';
       } catch (error) {
-        document.getElementById('error-message').innerText = '❌ 無法取得資料，請稍後再試。';
+        document.getElementById('error-message').innerText = '❌ 無法取得資料，請稍後再試。\n' + error.message;
         document.getElementById('fatigue').innerText = '-';
-        document.getElementById('speed').innerText = '-';
-        document.getElementById('drive_time').innerText = '-';
+        document.getElementById('heart_rate').innerText = '-';
+        document.getElementById('alcohol_level').innerText = '-';
       }
     }
 
