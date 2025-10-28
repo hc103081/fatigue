@@ -10,6 +10,9 @@ from .ngrok import Ngrok
 from .web_Api import WebApi
 from .gpio import GPIO
 from .logs import Log
+from .camera import Camera
+
+
 
 __all__ = [
     "DataUnified",
@@ -23,4 +26,5 @@ __all__ = [
     "WebApi",
     "GPIO",
     "Log",
+    "Camera"
 ]

@@ -12,12 +12,13 @@ def main():
     GPIO.setmode(GPIO.BCM)
 
     init_components(app)
-        
+    
     try:
         thread_list: list[threading.Thread] = []
         
         # 啟動感測器更新執行緒
-        update_sensor_thread = threading.Thread(target=update_sensor_data)
+        update_sensor_thread = threading.Thread(target=update_sensor_data,
+                                                args=(1.0,))
         thread_list.append(update_sensor_thread)
         
         # 啟動 Line Bot 執行緒
@@ -28,6 +29,7 @@ def main():
         web_api_thread = threading.Thread(target=web_api.run)
         thread_list.append(web_api_thread)
         
+        # 啟動 ngrok 執行緒
         ngrok_thread = threading.Thread(target=ngrok.run)
         thread_list.append(ngrok_thread)
         
@@ -52,6 +54,11 @@ def init_components(app):
     use_mock = not check_hardware_connected()
     try:
         unified = ClassUnified(
+            # 初始化攝像頭
+            camera = Camera(camera_index=0,
+                            frame_width=640,
+                            frame_height=480),
+            
             # 初始化臉部分析器
             fatigue = FaceAnalyzer(camera_index=0,
                                     threshold=0.3),
@@ -91,7 +98,7 @@ def init_components(app):
         Log.logger.warning(f"發生錯誤: {e}")
         raise e
 
-def update_sensor_data():
+def update_sensor_data(interval: float = 1.0):
     """
     更新感測器資料
     """
@@ -110,7 +117,7 @@ def update_sensor_data():
             fatigue_thread.join()
 
             refresh_sensor_data()
-            time.sleep(1)
+            time.sleep(interval)
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
         raise e

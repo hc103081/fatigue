@@ -5,22 +5,14 @@ from .logs import Log
 import os
 
 class Camera:
-    """攝像頭模組"""
-    _instance = None  # 單例實例變量
-    
+    """攝像頭模組"""    
     @dataclass
     class CameraData():
         """
         攝像頭數據
         """
+        frame: any
         is_camera_open: bool
-        
-    
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(Camera, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
 
     def __init__(self, camera_index=0,frame_width=640,frame_height=480):
         """ 
@@ -29,6 +21,7 @@ class Camera:
             camera_index: 攝像頭索引 預設為 0      
         """
         self.data = self.CameraData(
+            frame=None,
             is_camera_open=False
         )
         os.environ["QT_QPA_PLATFORM"] = "xcb"
