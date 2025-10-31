@@ -11,7 +11,6 @@ class Camera:
         """
         攝像頭數據
         """
-        frame: any
         is_camera_open: bool
 
     def __init__(self, camera_index=0,frame_width=640,frame_height=480):
@@ -21,7 +20,6 @@ class Camera:
             camera_index: 攝像頭索引 預設為 0      
         """
         self.data = self.CameraData(
-            frame=None,
             is_camera_open=False
         )
         os.environ["QT_QPA_PLATFORM"] = "xcb"

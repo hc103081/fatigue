@@ -28,7 +28,7 @@ class WebApi():
                 return jsonify({"success": True,
                                 "data": asdict(data)})
         except Exception as e:
-            Log.logger.warning(f"get_dataClass error: {e}")
+            Log.logger.warning(f"web get_dataClass error: {e}")
             return jsonify({"success": False,
                             "error": str(e)}), 500
     

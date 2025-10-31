@@ -44,7 +44,7 @@ class FaceAnalyzer():
         
         self.last_log_time = time.time()
 
-    def get_data(self):
+    def get_data(self) -> FatigueData:
         """
         取得臉部分析數據
         Returns:
@@ -59,7 +59,7 @@ class FaceAnalyzer():
         )
         return data
 
-    def update(self,show=False):
+    def update(self,show=False) -> bool:
         """
         更新影像分析數據
         """
@@ -92,7 +92,7 @@ class FaceAnalyzer():
         
         return True
 
-    def show(self,frame,landmarks):
+    def show(self,frame,landmarks) -> None:
         """
         顯示影像
         """
@@ -127,7 +127,7 @@ class FaceAnalyzer():
             pass
             
     
-    def compute_ear(self,eye_points):
+    def compute_ear(self,eye_points) -> float:
         """
         計算眼睛縱橫比 EAR
         """
@@ -137,7 +137,7 @@ class FaceAnalyzer():
         ear = (A + B) / (2.0 * C)
         return ear
 
-    def compute_mar(self,mouth_points):
+    def compute_mar(self,mouth_points) -> float:
         """
         計算嘴巴張開比 MAR
         """
@@ -147,7 +147,7 @@ class FaceAnalyzer():
         mar = (A + B) / (2.0 * C)
         return mar
 
-    def get_ear_mar(self,landmarks):
+    def get_ear_mar(self,landmarks) -> tuple:
         """
         計算眼睛縱橫比 EAR 與嘴巴張開比 MAR
         """
@@ -159,7 +159,7 @@ class FaceAnalyzer():
         mar = self.compute_mar(mouth)
         return ear,mar
 
-    def get_fatigue_score(self):
+    def get_fatigue_score(self) -> float:
         """
         回傳疲勞值（EAR 越低 + MAR 越高 → 疲勞越高）
         """
@@ -167,7 +167,7 @@ class FaceAnalyzer():
         fatigue_score = self.data.mar - self.data.ear
         return fatigue_score
     
-    def set_threshold(self,threshold):
+    def set_threshold(self,threshold) -> None:
         """
         設定疲勞值閾值
         Params:
@@ -175,7 +175,7 @@ class FaceAnalyzer():
         """
         self.data.threshold = threshold
 
-    def is_fatigued(self):
+    def is_fatigued(self) -> bool:
         """
         回傳是否疲勞（根據疲勞值是否超過閾值）
         Params:
