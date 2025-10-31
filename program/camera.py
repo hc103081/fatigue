@@ -64,13 +64,6 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
     
-    def run(self):
-        """ 持續讀取影像並更新 data.frame """
-        while self.data.is_camera_open:
-            frame = self.get_frame()
-            if frame is not None:
-                self.data.frame = frame
-    
     # 關閉攝像頭
     def close(self):
         """ 關閉攝像頭 """

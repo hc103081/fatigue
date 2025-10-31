@@ -33,10 +33,6 @@ def main():
         ngrok_thread = threading.Thread(target=ngrok.run)
         thread_list.append(ngrok_thread)
         
-        # 啟動攝像頭執行緒
-        camera_thread = threading.Thread(target=unified.camera.run)
-        thread_list.append(camera_thread)
-        
         # 啟動所有執行緒
         for thread in thread_list:
             thread.start()
