@@ -126,7 +126,7 @@ def refresh_sensor_data():
         alcohol=unified.alcohol.get_data(),
         heart=unified.heart.get_data(),
         fatigue=unified.fatigue.get_data(),
-    )
+    ) 
     
 def check_hardware_connected():
     """
