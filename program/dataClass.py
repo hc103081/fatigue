@@ -21,10 +21,11 @@ class ClassUnified:
     """
     整合感測器類別的類別
     """
-    data: DataUnified
-    alcohol: AlcoholSensor
-    heart: HeartRateSensor
-    fatigue: FaceAnalyzer
-    line_api: Line_Api
-    camera: Camera
+    
+    data: DataUnified = None
+    alcohol: AlcoholSensor = None
+    heart: HeartRateSensor = None
+    fatigue: FaceAnalyzer = None
+    line_api: Line_Api = None
+    camera: Camera = None
     

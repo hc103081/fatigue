@@ -33,6 +33,10 @@ def main():
         ngrok_thread = threading.Thread(target=ngrok.run)
         thread_list.append(ngrok_thread)
         
+        # 啟動攝像頭執行緒
+        camera_thread = threading.Thread(target=unified.camera.run)
+        thread_list.append(camera_thread)
+        
         # 啟動所有執行緒
         for thread in thread_list:
             thread.start()
@@ -53,31 +57,27 @@ def init_components(app):
     global unified, line_bot, web_api, ngrok
     use_mock = not check_hardware_connected()
     try:
-        unified = ClassUnified(
-            # 初始化攝像頭
-            camera = Camera(camera_index=0,
-                            frame_width=640,
-                            frame_height=480),
-            
-            # 初始化臉部分析器
-            fatigue = FaceAnalyzer(camera_index=0,
-                                    threshold=0.3),
-            
-            # 初始化酒精感測器
-            alcohol = AlcoholSensor(use_mock=use_mock,
-                                    limit=0.15),
-            
-            # 初始化心率感測器
-            heart = HeartRateSensor(use_mock=use_mock,
-                                    threshold_low=60,
-                                    threshold_high=100),
-            
-            # 初始化 Line API
-            line_api = Line_Api(),
-            
-            data = None
-        )
+        unified = ClassUnified()
+        # 初始化攝像頭
+        unified.camera = Camera(camera_index=0,
+                        frame_width=640,
+                        frame_height=480)
         
+        # 初始化臉部分析器
+        unified.fatigue = FaceAnalyzer(camera=unified.camera,
+                                threshold=0.3)
+        
+        # 初始化酒精感測器
+        unified.alcohol = AlcoholSensor(use_mock=use_mock,
+                                limit=0.15)
+        
+        # 初始化心率感測器
+        unified.heart = HeartRateSensor(use_mock=use_mock,
+                                threshold_low=60,
+                                threshold_high=100)
+        
+        # 初始化 Line API
+        unified.line_api = Line_Api()       
         
         unified.data = DataUnified(
             alcohol=unified.alcohol.get_data(),

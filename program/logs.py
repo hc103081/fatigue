@@ -1,20 +1,23 @@
 import logging
+from logging.handlers import RotatingFileHandler
 
 class Log:
     FORMAT = '%(asctime)s %(levelname)s(%(funcName)s): %(message)s'
-    logging.basicConfig(level=logging.DEBUG, 
-                        filename='log/Log.log', 
-                        filemode='w', 
-                        format=FORMAT, 
-                        encoding='utf-8')
+    handler = RotatingFileHandler(
+        'log/Log.log', maxBytes=10*1024*1024, backupCount=5, encoding='utf-8'
+    )
+    handler.setFormatter(logging.Formatter(FORMAT))
+     
     logger = logging.getLogger()
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
     
     def __init__(self):
         return None
         
-        
 
 if __name__ == '__main__':
-    log = Log()
-    log.logger.info('This is an info message')
-    log.logger.warning('This is a debug message')
+    
+    pass
+    

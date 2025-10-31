@@ -42,7 +42,7 @@ class WebApi():
     def get_frame_encoded(self):
         while True:
             try:
-                frame = self.unified.fatigue.get_frame()
+                frame = self.unified.camera.get_frame()
                 if frame is None:
                     Log.logger.warning("未取得影像 frame，結束串流")
                     break

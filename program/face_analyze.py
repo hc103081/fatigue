@@ -6,31 +6,30 @@ import dlib
 import numpy as np
 import cv2
 
-class FaceAnalyzer(Camera):
+class FaceAnalyzer():
     """臉部分析模組"""
     
     @dataclass
-    class FatigueData(Camera.CameraData):
+    class FatigueData():
         fatigue_score: float    # 疲勞值
         is_fatigued: bool       # 是否疲勞
         ear: float              # 眼睛縱橫比
         mar: float              # 嘴巴開合比
         threshold: float        # 疲勞閾值
     
-    def __init__(self, camera_index=0, threshold=0.3):
+    def __init__(self, camera: Camera, threshold=0.3):
         """
         初始化臉部分析器
         Params:
-            camera_index: 攝影機索引
+            camera: 攝影機物件
             threshold: 疲勞閾值
         """
-        super().__init__(camera_index)
+        self.camera = camera
         self.data = FaceAnalyzer.FatigueData(
             fatigue_score=0.0,
             is_fatigued=False,
             ear=0.0,
             mar=0.0,
-            is_camera_open=self.data.is_camera_open,
             threshold=threshold
         )
         
@@ -57,7 +56,6 @@ class FaceAnalyzer(Camera):
             ear=self.data.ear,
             mar=self.data.mar,
             threshold=self.data.threshold,
-            is_camera_open=self.data.is_camera_open,
         )
         return data
 
@@ -65,17 +63,15 @@ class FaceAnalyzer(Camera):
         """
         更新影像分析數據
         """
-        frame = self.get_frame()
+        frame = self.camera.get_frame()
         if frame is None:
             now = time.time()
              
             # 只在超過 log_interval 秒才記錄
             if now - self.last_log_time > self.log_interval:  
                 Log.logger.warning("未取得影像 frame，跳過分析")
-                self.data.is_camera_open = False
                 self.last_log_time = now
             return False
-        self.data.is_camera_open = True
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)
         faces = self.detector(gray)
