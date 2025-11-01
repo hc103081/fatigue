@@ -88,7 +88,7 @@ def init_components(app):
         line_bot = Line_bot(app,unified)
         
         # 初始化 Web API
-        web_api = WebApi(app,unified)
+        web_api = WebApi(unified)
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")

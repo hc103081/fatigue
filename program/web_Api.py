@@ -19,7 +19,7 @@ class WebApi():
         while True:
             data = self.get_dataClass_dict()
             try:
-                requests.post('https://fatigue-m68t.onrender.com/upload_data', json=data)
+                requests.post('https://fatigue-m68t.onrender.com/upload_dataClass', json=data)
             except Exception as e:
                 Log.logger.warning(f"send_dataClass failed: {e}")
             time.sleep(interval)

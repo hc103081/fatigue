@@ -14,26 +14,21 @@ latest_dataClass = None  # 新增快取 dataclass 統一資料
 def upload_dataClass():
     global latest_dataClass
     try:
-        # Pi 端推送 dataclass 統一資料
         data = request.get_json()
-        latest_dataClass = data.get('data')  # 建議 Pi 端 json 格式為 {"data": {...}}
+        if not data:
+            return jsonify({"success": False, "error": "No dataClass provided"}), 400
+        latest_dataClass = data
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/get_dataClass', methods=['GET'])
-def get_classdata():
+def get_dataClass():
     global latest_dataClass
-    if latest_dataClass:
-        return jsonify({
-            "success": True,
-            "data": latest_dataClass
-        })
-    else:
-        return jsonify({
-            "success": False,
-            "error": "No dataClass available"
-        }), 404
+    if latest_dataClass is None:
+        return jsonify({"success": False, "error": "No dataClass available"}), 404
+    return jsonify({"success": True, "data": latest_dataClass})
+
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
