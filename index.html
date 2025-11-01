@@ -57,15 +57,21 @@
     <span id="alcohol_level" class="value">載入中...</span>
   </div>
 
-  <div id="video-block" class="data-block">
+   <div id="video-block" class="data-block">
     <span class="label">即時影像：</span>
-    <iframe id="video-stream" src="https://fatigue-m68t.onrender.com/video_feed"></iframe>
+    <img id="video-img" src="" alt="即時影像" style="width:100%;height:200px;object-fit:cover;border-radius:8px;">
+    <div>
+      <label for="img-interval">刷新間隔(毫秒)：</label>
+      <input type="number" id="img-interval" value="1000" min="500" max="5000" step="100">
+      <button id="pause-img">暫停</button>
+      <button id="resume-img">恢復</button>
+    </div>
   </div>
 
   <div id="error-message" class="error"></div>
 
   <script>
-   async function fetchFatigueData() {
+    async function fetchFatigueData() {
       try {
         const response = await fetch('https://fatigue-m68t.onrender.com/get_dataClass', { method: 'GET' });
         const data = await response.json();
@@ -94,6 +100,47 @@
     // 每 n 秒自動刷新資料
     setInterval(fetchFatigueData,2000);
     fetchFatigueData();
+
+    let imgTimer = null;
+    let imgInterval = 1000;
+    let paused = false;
+
+    async function fetchLatestImage() {
+      if (paused) return;
+      try {
+        const response = await fetch('https://fatigue-m68t.onrender.com/get_latest_image');
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('video-img').src = 'data:image/jpeg;base64,' + data.image_base64;
+        } else {
+          document.getElementById('video-img').alt = '無影像';
+        }
+      } catch (error) {
+        document.getElementById('video-img').alt = '影像取得失敗';
+      }
+    }
+
+    function startImgPolling() {
+      if (imgTimer) clearInterval(imgTimer);
+      imgTimer = setInterval(fetchLatestImage, imgInterval);
+    }
+
+    document.getElementById('img-interval').addEventListener('change', function() {
+      imgInterval = parseInt(this.value);
+      startImgPolling();
+    });
+
+    document.getElementById('pause-img').addEventListener('click', function() {
+      paused = true;
+    });
+
+    document.getElementById('resume-img').addEventListener('click', function() {
+      paused = false;
+      fetchLatestImage();
+    });
+
+    startImgPolling();
+    fetchLatestImage();
   </script>
 </body>
 </html>
