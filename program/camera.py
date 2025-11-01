@@ -31,7 +31,7 @@ class Camera:
             self.cap = cv2.VideoCapture(camera_index)  # 初始化攝像頭
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
-            
+            self.data.is_camera_open = True
             
         except cv2.error:
             raise Exception("無法初始化攝像頭")
