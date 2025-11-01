@@ -1,50 +1,60 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
 from flask_cors import CORS
+import base64
 
 app = Flask(__name__)
 CORS(app, origins=["https://hc103081.github.io"])  # 新增這行
 
+latest_image_base64 = None
+latest_dataClass = None  # 新增快取 dataclass 統一資料
 
-@app.route('/get_dataClass', methods=['GET', 'POST'])
-def get_classdata():
-    # 向 Pi 端請求最新資料
-    pi_url = "https://undenunciated-ultrared-neil.ngrok-free.app/get_dataClass"
+
+@app.route('/upload_dataClass', methods=['POST'])
+def upload_dataClass():
+    global latest_dataClass
     try:
-        pi_response = requests.get(pi_url, timeout=3)
-        pi_data = pi_response.json()
-        if not pi_data["success"]:
-            return jsonify({
-                "success": False,
-                "error": "樹莓派回傳失敗",
-            }), 500
-        else:
-            return jsonify({
-                "success": True,
-                "data":pi_data["data"]
-            })
+        # Pi 端推送 dataclass 統一資料
+        data = request.get_json()
+        latest_dataClass = data.get('data')  # 建議 Pi 端 json 格式為 {"data": {...}}
+        return jsonify({"success": True})
     except Exception as e:
-        # 回傳明確的錯誤訊息
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/get_dataClass', methods=['GET'])
+def get_classdata():
+    global latest_dataClass
+    if latest_dataClass:
+        return jsonify({
+            "success": True,
+            "data": latest_dataClass
+        })
+    else:
         return jsonify({
             "success": False,
-            "error": f"樹莓派不在線：{str(e)}",
-        }), 500
-        
-@app.route('/video_feed', methods=['GET'])
-def video_feed():
-    """
-    代理 Raspberry Pi 的 MJPEG 影像串流
-    """
-    pi_video_url = "https://undenunciated-ultrared-neil.ngrok-free.app/video_feed"
+            "error": "No dataClass available"
+        }), 404
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    global latest_image_base64
     try:
-        pi_response = requests.get(pi_video_url, stream=True, timeout=60)  # 增加 timeout
-        def generate():
-            for chunk in pi_response.iter_content(chunk_size=1024):
-                if chunk:
-                    yield chunk
-        return app.response_class(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+        # Pi 端推送 base64 編碼的圖片
+        data = request.get_json()
+        latest_image_base64 = data.get('image_base64')
+        return jsonify({"success": True})
     except Exception as e:
-        return f"串流取得失敗: {str(e)}", 500
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/get_latest_image', methods=['GET'])
+def get_latest_image():
+    global latest_image_base64
+    if latest_image_base64:
+        return jsonify({"success": True, "image_base64": latest_image_base64})
+    else:
+        return jsonify({"success": False, "error": "No image available"}), 404
+
+
 
 if __name__ == '__main__':
     app.run(threaded=True)
