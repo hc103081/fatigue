@@ -219,8 +219,22 @@ def mq3_test():
         voltage = convert_volts(value, 2)
         print(f"MQ3 Value: {value}, Voltage: {voltage}V")
         time.sleep(1)
+def heart_test():
+    import max30102
+    import hrcalc
+    import time
 
-        
+    m = max30102.MAX30102()
+
+    while True:
+        red, ir = m.read_sequential()
+        hr, hr_valid, spo2, spo2_valid = hrcalc.calc_hr_and_spo2(ir, red)
+        if hr_valid:
+            print("Heart Rate:", hr)
+        if spo2_valid:
+            print("SpO2:", spo2)
+        time.sleep(1)
+
 if __name__ == "__main__":
     # line_test()
     # face_analyze_test2()
