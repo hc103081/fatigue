@@ -30,12 +30,12 @@ class WebApi():
 
         @self.sio.event
         def connect():
-            print("SocketIO connected!")
+            Log.logger.info("SocketIO connected!")
             self.connected = True
 
         @self.sio.event
         def disconnect():
-            print("SocketIO disconnected!")
+            Log.logger.info("SocketIO disconnected!")
             self.connected = False
 
     def send_dataClass(self, interval=1):
@@ -43,6 +43,7 @@ class WebApi():
         定時推送 dataclass 統一資料至 Render WebSocket
         interval: 推送間隔秒數
         """
+        time_last = time.time()
         while True:
             data = self.get_dataClass_dict()
             if self.connected:
@@ -53,7 +54,9 @@ class WebApi():
                 except Exception as e:
                     Log.logger.warning(f"send_dataClass failed: {e}")
             else:
-                Log.logger.warning("SocketIO 尚未連線，無法推送 dataClass")
+                if time.time() - time_last >= 1:
+                    Log.logger.warning("SocketIO 尚未連線，無法推送 dataClass")
+                    time_last = time.time()
             time.sleep(interval)
 
     def send_image(self, interval=1):
@@ -61,6 +64,7 @@ class WebApi():
         定時推送壓縮影像至 Render WebSocket
         interval: 推送間隔秒數
         """
+        time_last = time.time()
         while True:
             if not self.unified.camera.data.is_camera_open:
                 time.sleep(interval)
@@ -83,7 +87,9 @@ class WebApi():
                 except Exception as e:
                     Log.logger.warning(f"send_image failed: {e}")
             else:
-                Log.logger.warning("SocketIO 尚未連線，無法推送 image")
+                if time.time() - time_last >= 1:
+                    Log.logger.warning("SocketIO 尚未連線，無法推送 image")
+                    time_last = time.time()
             time.sleep(interval)  # 可自訂推送速率
 
     def get_dataClass_dict(self):
