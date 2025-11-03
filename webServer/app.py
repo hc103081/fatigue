@@ -27,13 +27,13 @@ def get_latest_image():
     return jsonify({"success": True, "image_base64": latest_image_base64})
 
 # WebSocket: Pi 端推送資料
-@socketio.on('upload_dataClass')
+@socketio.on('dataClass_update')
 def handle_upload_dataClass(data):
     global latest_dataClass
     latest_dataClass = data
     emit('dataClass_update', data, broadcast=True)  # 廣播給前端
 
-@socketio.on('upload_image')
+@socketio.on('image_update')
 def handle_upload_image(data):
     global latest_image_base64
     latest_image_base64 = data
