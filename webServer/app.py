@@ -24,7 +24,7 @@ def get_dataClass():
 def get_latest_image():
     if latest_image_base64 is None:
         return jsonify({"success": False, "error": "No image available"})
-    return jsonify({"success": True, "image_base64": latest_image_base64})
+    return jsonify({"success": True, "image": latest_image_base64})
 
 # WebSocket: Pi 端推送資料
 @socketio.on('dataClass_update')
