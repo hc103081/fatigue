@@ -9,7 +9,20 @@ from .dataClass import DataUnified, ClassUnified
 class WebApi():
     """Web API 服務（WebSocket 客戶端）"""
     def __init__(self, unified: ClassUnified, 
-                 server_url='https://fatigue-m68t.onrender.com'):
+                 server_url='https://fatigue-m68t.onrender.com',
+                 interval_data=1,
+                 interval_image=1):
+        """
+        初始化 Web API 服務
+        Params:
+            unified (ClassUnified): 統一資料類別
+            server_url (str): Render WebSocket 伺服器 URL
+            interval_data (float): 推送 dataclass 統一資料間隔秒數
+            interval_image (float): 推送壓縮影像間隔秒數
+        """
+        
+        self.interval_data = interval_data
+        self.interval_image = interval_image
         self.unified = unified
         self.server_url = server_url
         self.sio = socketio.Client()
@@ -85,7 +98,7 @@ class WebApi():
             dict_data["camera"]["frame"] = None
         return dict_data
 
-    def run(self, interval_data=1, interval_image=1):
+    def run(self):
         """
         啟動 Web API 服務（資料與影像推送執行緒）
         """
@@ -102,8 +115,8 @@ class WebApi():
             if not self.connected:
                 time.sleep(5)
 
-        send_image_thread = threading.Thread(target=self.send_image, args=(interval_image,), daemon=True)
-        send_dataClass_thread = threading.Thread(target=self.send_dataClass, args=(interval_data,), daemon=True)
+        send_image_thread = threading.Thread(target=self.send_image, args=(self.interval_image,), daemon=True)
+        send_dataClass_thread = threading.Thread(target=self.send_dataClass, args=(self.interval_data,), daemon=True)
         threads = [send_image_thread, send_dataClass_thread]
         for thread in threads:
             thread.start()
