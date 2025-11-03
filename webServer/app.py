@@ -17,14 +17,14 @@ latest_image_base64 = None
 @app.route('/get_dataClass', methods=['GET'])
 def get_dataClass():
     if latest_dataClass is None:
-        return jsonify({"success": False, "error": "No dataClass available"})
-    return jsonify({"success": True, "data": latest_dataClass})
+        return jsonify({"error": "No dataClass available"})
+    return jsonify(latest_dataClass)
 
 @app.route('/get_latest_image', methods=['GET'])
 def get_latest_image():
     if latest_image_base64 is None:
-        return jsonify({"success": False, "error": "No image available"})
-    return jsonify({"success": True, "image": latest_image_base64})
+        return jsonify({"error": "No image available"})
+    return jsonify(latest_image_base64)
 
 # WebSocket: Pi 端推送資料
 @socketio.on('dataClass_update')
