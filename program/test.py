@@ -194,13 +194,62 @@ def thread_test():
     f1()
     b.join()
         
-        
+def alcohol_test():
+    from gpiozero import MCP3008
+    import time
+
+    # MCP3008 的 CH0 通道
+    sensor = MCP3008(channel=0)
+    
+    while True:
+        value = sensor.value  # 取得 0~1 之間的類比值
+        print(f"MQ3感測器數值: {value:.3f}")
+        time.sleep(1)
+
+def mq3_test():
+    import spidev
+    import time
+
+    spi = spidev.SpiDev()
+    spi.open(0, 0)
+
+    def read_channel(channel):
+        adc = spi.xfer2([1, (8 + channel) << 4, 0])
+        data = ((adc[1] & 3) << 8) + adc[2]
+        return data
+
+    def convert_volts(data, places):
+        volts = (data * 3.3) / 1023
+        return round(volts, places)
+
+    while True:
+        value = read_channel(0)
+        voltage = convert_volts(value, 2)
+        print(f"MQ3 Value: {value}, Voltage: {voltage}V")
+        time.sleep(1)
+def heart_test():
+    import max30102
+    import hrcalc
+    import time
+
+    m = max30102.MAX30102()
+
+    while True:
+        red, ir = m.read_sequential()
+        hr, hr_valid, spo2, spo2_valid = hrcalc.calc_hr_and_spo2(ir, red)
+        if hr_valid:
+            print("Heart Rate:", hr)
+        if spo2_valid:
+            print("SpO2:", spo2)
+        time.sleep(1)
+
 if __name__ == "__main__":
     # line_test()
     # face_analyze_test2()
     # face_analyze_test()
     # flask_test()
-    # thread_test()
+    # alcohol_test()
+    mq3_test()
     pass
     
 
