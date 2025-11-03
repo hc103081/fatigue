@@ -35,8 +35,7 @@ class WebApi():
             if self.connected:
                 try:
                     self.sio.emit('dataClass_update',
-                                  {"success": True, "data": data},
-                                  broadcast=True)
+                                  {"success": True, "data": data})
 
                 except Exception as e:
                     Log.logger.warning(f"send_dataClass failed: {e}")
