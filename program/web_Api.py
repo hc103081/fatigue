@@ -13,13 +13,17 @@ class WebApi():
         self.unified = unified
         self.server_url = server_url
         self.sio = socketio.Client()
-        try:
-            self.sio.connect(self.server_url)
-            self.success_connect = True
-            Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
-        except Exception as e:
-            self.success_connect = False
-            Log.logger.warning(f"WebSocket 連線失敗: {e}")
+        self.connected = False
+
+        @self.sio.event
+        def connect():
+            print("SocketIO connected!")
+            self.connected = True
+
+        @self.sio.event
+        def disconnect():
+            print("SocketIO disconnected!")
+            self.connected = False
 
     def send_dataClass(self, interval=1):
         """
@@ -28,10 +32,13 @@ class WebApi():
         """
         while True:
             data = self.get_dataClass_dict()
-            try:
-                self.sio.emit('upload_dataClass', data)
-            except Exception as e:
-                Log.logger.warning(f"send_dataClass failed: {e}")
+            if self.connected:
+                try:
+                    self.sio.emit('upload_dataClass', data)
+                except Exception as e:
+                    Log.logger.warning(f"send_dataClass failed: {e}")
+            else:
+                Log.logger.warning("SocketIO 尚未連線，無法推送 dataClass")
             time.sleep(interval)
 
     def send_image(self, interval=1):
@@ -55,10 +62,13 @@ class WebApi():
             # JPEG 壓縮品質 60
             _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
             img_base64 = base64.b64encode(buffer).decode('utf-8')
-            try:
-                self.sio.emit('upload_image', img_base64)
-            except Exception as e:
-                Log.logger.warning(f"send_image failed: {e}")
+            if self.connected:
+                try:
+                    self.sio.emit('upload_image', img_base64)
+                except Exception as e:
+                    Log.logger.warning(f"send_image failed: {e}")
+            else:
+                Log.logger.warning("SocketIO 尚未連線，無法推送 image")
             time.sleep(interval)  # 可自訂推送速率
 
     def get_dataClass_dict(self):
@@ -78,17 +88,17 @@ class WebApi():
         啟動 Web API 服務（資料與影像推送執行緒）
         """
         import threading
-        
-        # 等待成功連線
-        while not self.success_connect:
+
+        # 持續嘗試連線直到成功
+        while not self.connected:
             try:
                 self.sio.connect(self.server_url)
-                self.success_connect = True
-                Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
+                if self.connected:
+                    Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
             except Exception as e:
-                self.success_connect = False
                 Log.logger.warning(f"WebSocket 連線失敗: {e}")
-            time.sleep(5)
+            if not self.connected:
+                time.sleep(5)
 
         send_image_thread = threading.Thread(target=self.send_image, args=(interval_image,), daemon=True)
         send_dataClass_thread = threading.Thread(target=self.send_dataClass, args=(interval_data,), daemon=True)
