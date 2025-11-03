@@ -1,42 +1,53 @@
-import base64
-from dataclasses import asdict
-import cv2
-import requests
+import socketio
 import time
+import base64
+import cv2
+from dataclasses import asdict
 from .logs import Log
 from .dataClass import DataUnified, ClassUnified
 
 class WebApi():
-    """Web API 服務"""
-    def __init__(self,unified:ClassUnified):
+    """Web API 服務（WebSocket 客戶端）"""
+    def __init__(self, unified: ClassUnified, 
+                 server_url='https://fatigue-m68t.onrender.com'):
         self.unified = unified
-        
+        self.server_url = server_url
+        self.sio = socketio.Client()
+        try:
+            self.sio.connect(self.server_url)
+            self.success_connect = True
+            Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
+        except Exception as e:
+            self.success_connect = False
+            Log.logger.warning(f"WebSocket 連線失敗: {e}")
+
     def send_dataClass(self, interval=1):
         """
-        定時上傳 dataclass 統一資料至 Render API
-        interval: 上傳間隔秒數
+        定時推送 dataclass 統一資料至 Render WebSocket
+        interval: 推送間隔秒數
         """
         while True:
             data = self.get_dataClass_dict()
             try:
-                requests.post('https://fatigue-m68t.onrender.com/upload_dataClass', json=data)
+                self.sio.emit('upload_dataClass', data)
             except Exception as e:
                 Log.logger.warning(f"send_dataClass failed: {e}")
             time.sleep(interval)
 
     def send_image(self, interval=1):
         """
-        定時上傳壓縮影像至 Render API
-        interval: 上傳間隔秒數
+        定時推送壓縮影像至 Render WebSocket
+        interval: 推送間隔秒數
         """
         while True:
             if not self.unified.camera.data.is_camera_open:
+                time.sleep(interval)
                 continue
 
             frame = self.unified.camera.get_frame()
-
             if frame is None:
                 Log.logger.warning("get frame failed")
+                time.sleep(interval)
                 continue
 
             # 壓縮尺寸
@@ -45,7 +56,7 @@ class WebApi():
             _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
             img_base64 = base64.b64encode(buffer).decode('utf-8')
             try:
-                requests.post('https://fatigue-m68t.onrender.com/upload_image', json={'image_base64': img_base64})
+                self.sio.emit('upload_image', img_base64)
             except Exception as e:
                 Log.logger.warning(f"send_image failed: {e}")
             time.sleep(interval)  # 可自訂推送速率
@@ -62,25 +73,30 @@ class WebApi():
             dict_data["camera"]["frame"] = None
         return dict_data
 
-    
-            
     def run(self, interval_data=1, interval_image=1):
         """
-        啟動 Web API 伺服器
+        啟動 Web API 服務（資料與影像推送執行緒）
         """
         import threading
         
-        
+        # 等待成功連線
+        while not self.success_connect:
+            try:
+                self.sio.connect(self.server_url)
+                self.success_connect = True
+                Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
+            except Exception as e:
+                self.success_connect = False
+                Log.logger.warning(f"WebSocket 連線失敗: {e}")
+            time.sleep(5)
+
         send_image_thread = threading.Thread(target=self.send_image, args=(interval_image,), daemon=True)
         send_dataClass_thread = threading.Thread(target=self.send_dataClass, args=(interval_data,), daemon=True)
-        
         threads = [send_image_thread, send_dataClass_thread]
         for thread in threads:
             thread.start()
         for thread in threads:
             thread.join()
-            
 
-        
 if __name__ == "__main__":
     pass
