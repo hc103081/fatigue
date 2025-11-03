@@ -34,7 +34,10 @@ class WebApi():
             data = self.get_dataClass_dict()
             if self.connected:
                 try:
-                    self.sio.emit('upload_dataClass', data)
+                    self.sio.emit('dataClass_update',
+                                  {"success": True, "data": data},
+                                  broadcast=True)
+
                 except Exception as e:
                     Log.logger.warning(f"send_dataClass failed: {e}")
             else:
@@ -64,7 +67,7 @@ class WebApi():
             img_base64 = base64.b64encode(buffer).decode('utf-8')
             if self.connected:
                 try:
-                    self.sio.emit('upload_image', img_base64)
+                    self.sio.emit('upload_image', {"image": img_base64})
                 except Exception as e:
                     Log.logger.warning(f"send_image failed: {e}")
             else:
