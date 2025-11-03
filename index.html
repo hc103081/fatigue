@@ -100,8 +100,9 @@
     let latestImageBase64 = '';
     socket.on('image_update', function(data) {
       if (paused) return;
-      if (data && data.image_base64) {
-        latestImageBase64 = data.image_base64;
+      console.log(data);
+      if (data.success && data.image) {
+        latestImageBase64 = data.image;
         document.getElementById('video-img').src = 'data:image/jpeg;base64,' + latestImageBase64;
         document.getElementById('video-img').alt = '';
       } else {

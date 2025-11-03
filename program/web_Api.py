@@ -66,7 +66,8 @@ class WebApi():
             img_base64 = base64.b64encode(buffer).decode('utf-8')
             if self.connected:
                 try:
-                    self.sio.emit('image_update', img_base64)
+                    self.sio.emit('image_update',
+                                  {"success": True, "image": img_base64})
                 except Exception as e:
                     Log.logger.warning(f"send_image failed: {e}")
             else:
