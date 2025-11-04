@@ -72,8 +72,9 @@ class WebApi():
 
             frame = self.unified.camera.get_frame()
             if frame is None:
-                Log.logger.warning("get frame failed")
-                time.sleep(interval)
+                if time.time() - time_last >= 1:
+                    Log.logger.warning("get frame failed")
+                    time_last = time.time()
                 continue
 
             # 壓縮尺寸
