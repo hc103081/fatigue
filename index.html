@@ -3,277 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <title>疲勞駕駛監測系統</title>
-  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif;
-      background: #f5f7fa;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 30px auto;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px #bbb;
-      padding: 24px 18px 32px 18px;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 24px;
-      color: #333;
-      letter-spacing: 2px;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
     }
     .data-block {
-      background: #f8f9fb;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px #e0e0e0;
-      padding: 18px 14px 18px 14px;
-      margin-bottom: 22px;
-      position: relative;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .label {
       font-weight: bold;
-      font-size: 1.08em;
-      color: #444;
-      margin-right: 2px;
+      color: #555;
+      margin-bottom: 8px;
+      display: block;
     }
     .value {
-      font-size: 1.25em;
-      color: #222;
-      margin-left: 6px;
-      font-weight: 500;
+      font-size: 1.4em;
+      color: #009688;
     }
-    .status-light {
-      display:inline-block;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:#ccc;
-      border:2px solid #bbb;
-      vertical-align:middle;
-      margin-right:4px;
-      box-shadow:0 0 4px #bbb;
-      transition:background 0.2s;
+    .error {
+      color: #f44336;
+      font-weight: bold;
     }
-    .status-light.green { background:#4caf50; box-shadow:0 0 8px #4caf50; }
-    .status-light.red { background:#f44336; box-shadow:0 0 8px #f44336; }
-    .status-light.yellow { background:#ffeb3b; box-shadow:0 0 8px #ffeb3b; }
-    .status-light.blink { animation: blink-red 0.7s infinite; }
-    @keyframes blink-red {
-      0%, 100% { background:#f44336; }
-      50% { background:#fff; }
-    }
-    .status-text { font-size:0.95em; color:#888; margin-left:2px;}
-    .data-img { margin-top:10px; width:60px; height:60px; border-radius:8px; background:#eee; cursor:pointer; object-fit:cover; border:1px solid #ddd;}
-    .chart-block { margin-top:8px;}
-    canvas { background:#fafafa; border-radius:6px; }
-    #img-modal {
-      display:none;
-      position:fixed;
-      top:0; left:0;
-      width:100vw; height:100vh;
-      background:rgba(0,0,0,0.7);
-      z-index:999;
-      align-items:center;
-      justify-content:center;
-    }
-    #img-modal.active { display:flex; }
-    #modal-img {
-      max-width:80vw;
-      max-height:80vh;
-      border-radius:12px;
-      box-shadow:0 0 20px #333;
-      background:#fff;
-    }
-    .img-modal-close {
-      position:absolute;
-      top:24px; right:36px;
-      color:#fff;
-      font-size:2em;
-      cursor:pointer;
-      z-index:1000;
-      font-weight:bold;
-      text-shadow:0 0 8px #222;
-    }
-    @media (max-width: 700px) {
-      .container { max-width: 98vw; padding: 8px 2vw 18px 2vw;}
-      .data-block { padding: 12px 6px 14px 6px;}
-      .data-img { width:44px; height:44px;}
-      canvas { width:90px !important; height:32px !important;}
+    #video-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #eee;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>疲勞駕駛監測系統</h2>
-    <div id="fatigue-block" class="data-block">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="label">疲勞指數：</span>
-        <span id="fatigue-status" class="status-light yellow"></span>
-        <span id="fatigue-status-text" class="status-text">待確認</span>
-      </div>
-      <span id="fatigue" class="value">載入中...</span>
-      <img class="data-img" id="fatigue-img" src="" alt="疲勞圖片">
-      <div class="chart-block">
-        <canvas id="fatigue-chart" width="120" height="40"></canvas>
-      </div>
-    </div>
-    <div id="heart-rate-block" class="data-block">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="label">心率：</span>
-        <span id="heart-status" class="status-light yellow"></span>
-        <span id="heart-status-text" class="status-text">待確認</span>
-      </div>
-      <span id="heart_rate" class="value">載入中...</span>
-      <img class="data-img" id="heart-img" src="" alt="心率圖片">
-      <div class="chart-block">
-        <canvas id="heart-chart" width="120" height="40"></canvas>
-      </div>
-    </div>
-    <div id="alcohol-level-block" class="data-block">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="label">酒精濃度：</span>
-        <span id="alcohol-status" class="status-light yellow"></span>
-        <span id="alcohol-status-text" class="status-text">待確認</span>
-      </div>
-      <span id="alcohol_level" class="value">載入中...</span>
-      <img class="data-img" id="alcohol-img" src="" alt="酒精圖片">
-      <div class="chart-block">
-        <canvas id="alcohol-chart" width="120" height="40"></canvas>
-      </div>
-    </div>
-    <div id="image-block" class="data-block">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="label">即時影像：</span>
-      </div>
-      <img id="latest-image" src="" alt="即時影像" style="margin-top:10px;width:120px;height:90px;border-radius:8px;background:#eee;cursor:pointer;object-fit:cover;border:1px solid #ddd;">
+  <h2>🚗 疲勞駕駛監測系統</h2>
+
+  <div id="fatigue-block" class="data-block">
+    <span class="label">疲勞指數：</span>
+    <span id="fatigue" class="value">載入中...</span>
+  </div>
+
+  <div id="heart-rate-block" class="data-block">
+    <span class="label">心率：</span>
+    <span id="heart_rate" class="value">載入中...</span>
+  </div>
+
+  <div id="alcohol-level-block" class="data-block">
+    <span class="label">酒精濃度：</span>
+    <span id="alcohol_level" class="value">載入中...</span>
+  </div>
+
+  <div id="video-block" class="data-block">
+    <span class="label">即時影像：</span>
+    <img id="video-img" src="" alt="即時影像" />
+    <div>
+      <label for="img-interval">刷新間隔(毫秒)：</label>
+      <input type="number" id="img-interval" value="1000" min="500" max="5000" step="100">
+      <button id="pause-img">暫停</button>
+      <button id="resume-img">恢復</button>
     </div>
   </div>
-  <!-- 圖片放大彈窗 -->
-  <div id="img-modal">
-    <span class="img-modal-close" id="img-modal-close">&times;</span>
-    <img id="modal-img" src="">
-  </div>
+
+  <div id="error-message" class="error"></div>
+
   <script>
-    const socket = io();
-    // 狀態燈判斷
-    function setStatusLight(id, status) {
-      const light = document.getElementById(id + '-status');
-      const text = document.getElementById(id + '-status-text');
-      light.classList.remove('green', 'red', 'yellow', 'blink');
-      if (status === 'green') {
-        light.classList.add('green');
-        text.innerText = '正常';
-      } else if (status === 'red') {
-        light.classList.add('red', 'blink'); // 紅燈閃爍
-        text.innerText = '異常';
-      } else {
-        light.classList.add('yellow');
-        text.innerText = '待確認';
-      }
-    }
-    // 即時狀態圖（簡易折線圖示範，僅用空canvas，可日後替換為趨勢圖）
-    function drawChart(canvasId, dataArr, color) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || !dataArr || dataArr.length < 2) return;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      const step = canvas.width / (dataArr.length-1);
-      for(let i=0;i<dataArr.length;i++){
-        const x = i*step;
-        const y = canvas.height - (dataArr[i]/100)*canvas.height;
-        if(i===0) ctx.moveTo(x,y);
-        else ctx.lineTo(x,y);
-      }
-      ctx.stroke();
-    }
-    // 假資料示範
-    let fatigueHistory = [20,40,60,80,60,40,20];
-    let heartHistory = [70,75,80,78,76,74,72];
-    let alcoholHistory = [0,10,20,10,0,0,0];
-    drawChart('fatigue-chart', fatigueHistory, '#f44336');
-    drawChart('heart-chart', heartHistory, '#4caf50');
-    drawChart('alcohol-chart', alcoholHistory, '#2196f3');
+    // WebSocket 連線
+    const socket = io('https://fatigue-m68t.onrender.com', {
+      transports: ['websocket']
+    });
 
-    // WebSocket 資料更新
+    // 感測資料更新
     socket.on('dataClass_update', function(data) {
-      const sensor_data = data;
-      // 疲勞
-      if (sensor_data.fatigue) {
-        setStatusLight('fatigue', sensor_data.fatigue.is_fatigued === false ? 'green' : (sensor_data.fatigue.is_fatigued === true ? 'red' : 'yellow'));
-        document.getElementById('fatigue').innerText = sensor_data.fatigue.value ?? '無資料';
-        // 狀態圖更新
-        fatigueHistory.push(sensor_data.fatigue.value ?? 0);
-        if(fatigueHistory.length>20) fatigueHistory.shift();
-        drawChart('fatigue-chart', fatigueHistory, '#f44336');
-        // 圖片（可根據狀態換圖，暫用空）
-        document.getElementById('fatigue-img').src = '';
-      } else {
-        setStatusLight('fatigue', 'yellow');
-        document.getElementById('fatigue').innerText = '無資料';
-        document.getElementById('fatigue-img').src = '';
+      if (!data || !data.success) {
+        document.getElementById('error-message').innerText = '❌ 感測資料取得失敗';
+        document.getElementById('fatigue').innerText = '-';
+        document.getElementById('heart_rate').innerText = '-';
+        document.getElementById('alcohol_level').innerText = '-';
+        return;
       }
-      // 心率
-      if (sensor_data.heart) {
-        setStatusLight('heart', sensor_data.heart.is_heart_rate_normal === true ? 'green' : (sensor_data.heart.is_heart_rate_normal === false ? 'red' : 'yellow'));
-        document.getElementById('heart_rate').innerText = sensor_data.heart.value ?? '無資料';
-        heartHistory.push(sensor_data.heart.value ?? 0);
-        if(heartHistory.length>20) heartHistory.shift();
-        drawChart('heart-chart', heartHistory, '#4caf50');
-        document.getElementById('heart-img').src = '';
-      } else {
-        setStatusLight('heart', 'yellow');
-        document.getElementById('heart_rate').innerText = '無資料';
-        document.getElementById('heart-img').src = '';
-      }
-      // 酒精
-      if (sensor_data.alcohol) {
-        setStatusLight('alcohol', sensor_data.alcohol.is_over_limit === false ? 'green' : (sensor_data.alcohol.is_over_limit === true ? 'red' : 'yellow'));
-        document.getElementById('alcohol_level').innerText = sensor_data.alcohol.value ?? '無資料';
-        alcoholHistory.push(sensor_data.alcohol.value ?? 0);
-        if(alcoholHistory.length>20) alcoholHistory.shift();
-        drawChart('alcohol-chart', alcoholHistory, '#2196f3');
-        document.getElementById('alcohol-img').src = '';
-      } else {
-        setStatusLight('alcohol', 'yellow');
-        document.getElementById('alcohol_level').innerText = '無資料';
-        document.getElementById('alcohol-img').src = '';
-      }
+      var sensor_data = data.data;
+      document.getElementById('fatigue').innerText = (sensor_data.fatigue.fatigue_score?.toFixed(2) ?? '-') + ' 分';
+      document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average?.toFixed(2) ?? '-') + ' 次/分';
+      document.getElementById('alcohol_level').innerText = (sensor_data.alcohol.alcohol_value?.toFixed(2) ?? '-') + ' 度';
+      document.getElementById('error-message').innerText = '';
     });
-    // 即時影像
+
+    // 影像更新
+    let paused = false;
+    let latestImageBase64 = '';
     socket.on('image_update', function(data) {
-      if(data && data.image_base64){
-        document.getElementById('latest-image').src = 'data:image/jpeg;base64,' + data.image_base64;
+      if (paused) return;
+      if (data && data.image) {
+        latestImageBase64 = data.image;
+        document.getElementById('video-img').src = 'data:image/jpeg;base64,' + latestImageBase64;
+        document.getElementById('video-img').alt = '';
+      } else {
+        document.getElementById('video-img').alt = '無影像';
       }
     });
 
-    // 圖片放大功能
-    ['fatigue-img','heart-img','alcohol-img','latest-image'].forEach(function(id){
-      document.getElementById(id).onclick = function(){
-        const src = this.src;
-        if(src){
-          document.getElementById('modal-img').src = src;
-          document.getElementById('img-modal').classList.add('active');
+    // 支持自動刷新（如需定時刷新而非僅依 WebSocket 推送）
+    let imgTimer = null;
+    let imgInterval = 1000;
+    function startImgPolling() {
+      if (imgTimer) clearInterval(imgTimer);
+      imgTimer = setInterval(function() {
+        if (!paused && latestImageBase64) {
+          document.getElementById('video-img').src = 'data:image/jpeg;base64,' + latestImageBase64;
         }
-      };
+      }, imgInterval);
+    }
+    document.getElementById('img-interval').addEventListener('change', function() {
+      imgInterval = parseInt(this.value);
+      startImgPolling();
     });
-    document.getElementById('img-modal-close').onclick = function(e){
-      document.getElementById('img-modal').classList.remove('active');
-      document.getElementById('modal-img').src = '';
-      e.stopPropagation();
-    };
-    document.getElementById('img-modal').onclick = function(e){
-      if(e.target === this){
-        this.classList.remove('active');
-        document.getElementById('modal-img').src = '';
+
+    document.getElementById('pause-img').addEventListener('click', function() {
+      paused = true;
+    });
+
+    document.getElementById('resume-img').addEventListener('click', function() {
+      paused = false;
+      if (latestImageBase64) {
+        document.getElementById('video-img').src = 'data:image/jpeg;base64,' + latestImageBase64;
       }
-    };
+    });
+
+    startImgPolling();
+
+    // 連線錯誤提示
+    socket.on('connect_error', function(err) {
+      document.getElementById('error-message').innerText = '❌ WebSocket 連線失敗：' + err.message;
+    });
+    socket.on('disconnect', function() {
+      document.getElementById('error-message').innerText = '❌ WebSocket 已斷線';
+    });
   </script>
 </body>
 </html>
