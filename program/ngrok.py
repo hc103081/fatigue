@@ -5,7 +5,7 @@ import signal
 from .logs import Log
 
 class Ngrok:
-    def __init__(self, ngrok_bin: str = r"C:\vscode\ngrok\ngrok.exe"):
+    def __init__(self, ngrok_bin: str = r"/usr/local/bin/ngrok"):
         self.ngrok_bin = ngrok_bin
     
     def run(self):
