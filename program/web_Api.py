@@ -103,7 +103,24 @@ class WebApi():
             dict_data["fatigue"]["frame"] = None
         if "camera" in dict_data and "frame" in dict_data["camera"]:
             dict_data["camera"]["frame"] = None
+         # 修正 numpy.bool_ 型態
+        dict_data = self.convert_numpy_bools(dict_data)
+       
         return dict_data
+
+    def convert_numpy_bools(self, obj):
+            """
+            遞迴將 dict 內所有 numpy.bool_ 轉成標準 bool
+            """
+            import numpy as np
+            if isinstance(obj, dict):
+                return {k: self.convert_numpy_bools(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [self.convert_numpy_bools(v) for v in obj]
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            else:
+                return obj
 
     def run(self):
         """
