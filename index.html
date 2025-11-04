@@ -89,9 +89,9 @@
         return;
       }
       var sensor_data = data.data;
-      document.getElementById('fatigue').innerText = (sensor_data.fatigue.fatigue_score ?? '-') + ' 分';
-      document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average ?? '-') + ' 次/分';
-      document.getElementById('alcohol_level').innerText = (sensor_data.alcohol.alcohol_value ?? '-') + ' 度';
+      document.getElementById('fatigue').innerText = (sensor_data.fatigue.fatigue_score?.toFixed(2) ?? '-') + ' 分';
+      document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average?.toFixed(2) ?? '-') + ' 次/分';
+      document.getElementById('alcohol_level').innerText = (sensor_data.alcohol.alcohol_value?.toFixed(2) ?? '-') + ' 度';
       document.getElementById('error-message').innerText = '';
     });
 
@@ -100,7 +100,6 @@
     let latestImageBase64 = '';
     socket.on('image_update', function(data) {
       if (paused) return;
-      console.log(data);
       if (data && data.image) {
         latestImageBase64 = data.image;
         document.getElementById('video-img').src = 'data:image/jpeg;base64,' + latestImageBase64;
