@@ -254,7 +254,7 @@
       }
       // 心率
       if (sensor_data.heart) {
-        setStatusLight('heart', sensor_data.heart.is_heart_rate_normal === true ? 'green' : (sensor_data.heart.is_heart_rate_normal === false ? 'red' : 'yellow'));
+        setStatusLight('heart', sensor_data.heart.is_heart_rate_normal === false ? 'green' : (sensor_data.heart.is_heart_rate_normal === true ? 'red' : 'yellow'));
         document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average ?? '-') + ' 次/分';
         heartHistory.push(sensor_data.heart.bpm_average ?? 0);
         if(heartHistory.length>20) heartHistory.shift();
