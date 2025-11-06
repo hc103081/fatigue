@@ -212,10 +212,15 @@
       for(let i=0;i<dataArr.length;i++){
         // 超出範圍自動裁切
         let val = Math.max(min, Math.min(max, dataArr[i]));
-        const x = i*step;
-        const y = canvas.height - ((val-min)/(max-min))*canvas.height;
-        if(i===0) ctx.moveTo(x,y);
-        else ctx.lineTo(x,y);
+        // 疲勞指數為負值，需反向計算
+        let y;
+        if(canvasId === 'fatigue-chart'){
+          y = canvas.height - ((val - min) / (max - min)) * canvas.height;
+        }else{
+          y = canvas.height - ((val - min) / (max - min)) * canvas.height;
+        }
+        if(i===0) ctx.moveTo(x = i*step, y);
+        else ctx.lineTo(x = i*step, y);
       }
       ctx.stroke();
     }
