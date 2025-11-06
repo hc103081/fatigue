@@ -5,8 +5,6 @@ import time
 # program class
 from program import *
 
-unified: ClassUnified = None
-
 def main():
     app = Flask(__name__)
     GPIO.setmode(GPIO.BCM)

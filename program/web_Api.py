@@ -10,8 +10,8 @@ class WebApi():
     """Web API 服務（WebSocket 客戶端）"""
     def __init__(self, unified: ClassUnified, 
                  server_url='https://fatigue-m68t.onrender.com',
-                 interval_data=1,
-                 interval_image=1):
+                 interval_data: float = 1,
+                 interval_image: float = 1):
         """
         初始化 Web API 服務
         Params:
@@ -72,15 +72,16 @@ class WebApi():
 
             frame = self.unified.camera.get_frame()
             if frame is None:
-                Log.logger.warning("get frame failed")
-                time.sleep(interval)
+                if time.time() - time_last >= 1:
+                    Log.logger.warning("get frame failed")
+                    time_last = time.time()
                 continue
 
             # 壓縮尺寸
             frame = cv2.resize(frame, (320, 240))
             # JPEG 壓縮品質 60
             _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-            img_base64 = base64.b64encode(buffer).decode('utf-8')
+            img_base64 = base64.b64encode(buffer.tobytes()).decode('utf-8')
             if self.connected:
                 try:
                     self.sio.emit('image_update', {'image': img_base64})
@@ -102,7 +103,24 @@ class WebApi():
             dict_data["fatigue"]["frame"] = None
         if "camera" in dict_data and "frame" in dict_data["camera"]:
             dict_data["camera"]["frame"] = None
+         # 修正 numpy.bool_ 型態
+        dict_data = self.convert_numpy_bools(dict_data)
+       
         return dict_data
+
+    def convert_numpy_bools(self, obj):
+            """
+            遞迴將 dict 內所有 numpy.bool_ 轉成標準 bool
+            """
+            import numpy as np
+            if isinstance(obj, dict):
+                return {k: self.convert_numpy_bools(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [self.convert_numpy_bools(v) for v in obj]
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            else:
+                return obj
 
     def run(self):
         """
@@ -113,7 +131,7 @@ class WebApi():
         # 持續嘗試連線直到成功
         while not self.connected:
             try:
-                self.sio.connect(self.server_url)
+                self.sio.connect(self.server_url,wait_timeout=60)
                 if self.connected:
                     Log.logger.info(f"WebSocket 連線成功: {self.server_url}")
             except Exception as e:
