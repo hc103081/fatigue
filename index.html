@@ -217,10 +217,10 @@
       }
       ctx.stroke();
     }
-    // 初始假資料
-    let fatigueHistory = [20,40,60,80,60,40,20];
-    let heartHistory = [70,75,80,78,76,74,72];
-    let alcoholHistory = [0,10,20,10,0,0,0];
+    // 初始假資料（全部為0，代表最低點）
+    let fatigueHistory = Array(20).fill(0);
+    let heartHistory = Array(20).fill(0);
+    let alcoholHistory = Array(20).fill(0);
     drawChart('fatigue-chart', fatigueHistory, '#f44336');
     drawChart('heart-chart', heartHistory, '#4caf50');
     drawChart('alcohol-chart', alcoholHistory, '#2196f3');
@@ -242,8 +242,12 @@
       // 疲勞
       if (sensor_data.fatigue) {
         setStatusLight('fatigue', sensor_data.fatigue.is_fatigued === false ? 'green' : (sensor_data.fatigue.is_fatigued === true ? 'red' : 'yellow'));
-        document.getElementById('fatigue').innerText = (sensor_data.fatigue.fatigue_score ?? '-') + ' 分';
-        fatigueHistory.push(sensor_data.fatigue.fatigue_score ?? 0);
+        // 分數顯示小數點2位
+        let fatigueScore = typeof sensor_data.fatigue.fatigue_score === 'number'
+          ? sensor_data.fatigue.fatigue_score.toFixed(2)
+          : '-';
+        document.getElementById('fatigue').innerText = fatigueScore + ' 分';
+        fatigueHistory.push(Number(fatigueScore) || 0);
         if(fatigueHistory.length>20) fatigueHistory.shift();
         drawChart('fatigue-chart', fatigueHistory, '#f44336');
         document.getElementById('fatigue-img').src = '';
