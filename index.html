@@ -67,7 +67,6 @@
       50% { background:#fff; }
     }
     .status-text { font-size:0.95em; color:#888; margin-left:2px;}
-    .data-img { margin-top:10px; width:60px; height:60px; border-radius:8px; background:#eee; cursor:pointer; object-fit:cover; border:1px solid #ddd;}
     .chart-block { margin-top:8px;}
     canvas { background:#fafafa; border-radius:6px; }
     #img-modal {
@@ -114,7 +113,6 @@
     @media (max-width: 700px) {
       .container { max-width: 98vw; padding: 8px 2vw 18px 2vw;}
       .data-block { padding: 12px 6px 14px 6px;}
-      .data-img { width:44px; height:44px;}
       canvas { width:90px !important; height:32px !important;}
     }
   </style>
@@ -205,10 +203,17 @@
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.beginPath();
+      // 根據不同感測資料設定上下限
+      let min = 0, max = 100;
+      if(canvasId === 'fatigue-chart') { min = 0; max = 1; }
+      if(canvasId === 'alcohol-chart') { min = 0; max = 0.5; }
+      if(canvasId === 'heart-chart') { min = 40; max = 120; }
       const step = canvas.width / (dataArr.length-1);
       for(let i=0;i<dataArr.length;i++){
+        // 超出範圍自動裁切
+        let val = Math.max(min, Math.min(max, dataArr[i]));
         const x = i*step;
-        const y = canvas.height - (dataArr[i]/100)*canvas.height;
+        const y = canvas.height - ((val-min)/(max-min))*canvas.height;
         if(i===0) ctx.moveTo(x,y);
         else ctx.lineTo(x,y);
       }
@@ -241,13 +246,12 @@
         setStatusLight('fatigue', sensor_data.fatigue.is_fatigued === false ? 'green' : (sensor_data.fatigue.is_fatigued === true ? 'red' : 'yellow'));
         // 分數顯示小數點2位
         let fatigueScore = typeof sensor_data.fatigue.fatigue_score === 'number'
-          ? sensor_data.fatigue.fatigue_score.toFixed(2)
-          : '-';
-        document.getElementById('fatigue').innerText = fatigueScore + ' 分';
+          ? sensor_data.fatigue.fatigue_score
+          : 0;
+        document.getElementById('fatigue').innerText = (fatigueScore.toFixed(2)) + ' 分';
         fatigueHistory.push(Number(fatigueScore) || 0);
         if(fatigueHistory.length>20) fatigueHistory.shift();
         drawChart('fatigue-chart', fatigueHistory, '#f44336');
-
       } else {
         setStatusLight('fatigue', 'yellow');
         document.getElementById('fatigue').innerText = '無資料';
@@ -255,11 +259,13 @@
       // 心率
       if (sensor_data.heart) {
         setStatusLight('heart', sensor_data.heart.is_heart_rate_normal === false ? 'green' : (sensor_data.heart.is_heart_rate_normal === true ? 'red' : 'yellow'));
-        document.getElementById('heart_rate').innerText = (sensor_data.heart.bpm_average ?? '-') + ' 次/分';
-        heartHistory.push(sensor_data.heart.bpm_average ?? 0);
+        let heartValue = typeof sensor_data.heart.bpm_average === 'number'
+          ? sensor_data.heart.bpm_average
+          : 0;
+        document.getElementById('heart_rate').innerText = (heartValue ?? '-') + ' 次/分';
+        heartHistory.push(heartValue);
         if(heartHistory.length>20) heartHistory.shift();
         drawChart('heart-chart', heartHistory, '#4caf50');
-
       } else {
         setStatusLight('heart', 'yellow');
         document.getElementById('heart_rate').innerText = '無資料';
@@ -267,8 +273,11 @@
       // 酒精
       if (sensor_data.alcohol) {
         setStatusLight('alcohol', sensor_data.alcohol.is_over_limit === false ? 'green' : (sensor_data.alcohol.is_over_limit === true ? 'red' : 'yellow'));
-        document.getElementById('alcohol_level').innerText = (sensor_data.alcohol.alcohol_value ?? '-') + ' 度';
-        alcoholHistory.push(sensor_data.alcohol.alcohol_value ?? 0);
+        let alcoholValue = typeof sensor_data.alcohol.alcohol_value === 'number'
+          ? sensor_data.alcohol.alcohol_value
+          : 0;
+        document.getElementById('alcohol_level').innerText = (alcoholValue ?? '-') + ' 度';
+        alcoholHistory.push(alcoholValue);
         if(alcoholHistory.length>20) alcoholHistory.shift();
         drawChart('alcohol-chart', alcoholHistory, '#2196f3');
       } else {
