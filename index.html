@@ -129,7 +129,6 @@
         <span id="fatigue-status-text" class="status-text">待確認</span>
       </div>
       <span id="fatigue" class="value">載入中...</span>
-      <img class="data-img" id="fatigue-img" src="" alt="疲勞圖片">
       <div class="chart-block">
         <canvas id="fatigue-chart" width="120" height="40"></canvas>
       </div>
@@ -141,7 +140,6 @@
         <span id="heart-status-text" class="status-text">待確認</span>
       </div>
       <span id="heart_rate" class="value">載入中...</span>
-      <img class="data-img" id="heart-img" src="" alt="心率圖片">
       <div class="chart-block">
         <canvas id="heart-chart" width="120" height="40"></canvas>
       </div>
@@ -153,7 +151,6 @@
         <span id="alcohol-status-text" class="status-text">待確認</span>
       </div>
       <span id="alcohol_level" class="value">載入中...</span>
-      <img class="data-img" id="alcohol-img" src="" alt="酒精圖片">
       <div class="chart-block">
         <canvas id="alcohol-chart" width="120" height="40"></canvas>
       </div>
@@ -250,11 +247,10 @@
         fatigueHistory.push(Number(fatigueScore) || 0);
         if(fatigueHistory.length>20) fatigueHistory.shift();
         drawChart('fatigue-chart', fatigueHistory, '#f44336');
-        document.getElementById('fatigue-img').src = '';
+
       } else {
         setStatusLight('fatigue', 'yellow');
         document.getElementById('fatigue').innerText = '無資料';
-        document.getElementById('fatigue-img').src = '';
       }
       // 心率
       if (sensor_data.heart) {
@@ -263,11 +259,10 @@
         heartHistory.push(sensor_data.heart.bpm_average ?? 0);
         if(heartHistory.length>20) heartHistory.shift();
         drawChart('heart-chart', heartHistory, '#4caf50');
-        document.getElementById('heart-img').src = '';
+
       } else {
         setStatusLight('heart', 'yellow');
         document.getElementById('heart_rate').innerText = '無資料';
-        document.getElementById('heart-img').src = '';
       }
       // 酒精
       if (sensor_data.alcohol) {
@@ -276,11 +271,9 @@
         alcoholHistory.push(sensor_data.alcohol.alcohol_value ?? 0);
         if(alcoholHistory.length>20) alcoholHistory.shift();
         drawChart('alcohol-chart', alcoholHistory, '#2196f3');
-        document.getElementById('alcohol-img').src = '';
       } else {
         setStatusLight('alcohol', 'yellow');
         document.getElementById('alcohol_level').innerText = '無資料';
-        document.getElementById('alcohol-img').src = '';
       }
     });
 
@@ -336,7 +329,7 @@
     });
 
     // 圖片放大功能
-    ['fatigue-img','heart-img','alcohol-img','video-img'].forEach(function(id){
+    ['video-img'].forEach(function(id){
       document.getElementById(id).onclick = function(){
         const src = this.src;
         if(src){
@@ -345,17 +338,6 @@
         }
       };
     });
-    document.getElementById('img-modal-close').onclick = function(e){
-      document.getElementById('img-modal').classList.remove('active');
-      document.getElementById('modal-img').src = '';
-      e.stopPropagation();
-    };
-    document.getElementById('img-modal').onclick = function(e){
-      if(e.target === this){
-        this.classList.remove('active');
-        document.getElementById('modal-img').src = '';
-      }
-    };
   </script>
 </body>
 </html>
