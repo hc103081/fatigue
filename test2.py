@@ -40,11 +40,22 @@ def max30102_test():
     if args.show:
         hrm.show()
     print('sensor stoped!')
-
+def mq3_test_dout():
+    import RPi.GPIO as GPIO
+    import time
     
+    DOUT_PIN = 17  # 依你的接線設定
     
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(DOUT_PIN, GPIO.IN)
+    
+    while True:
+        value = GPIO.input(DOUT_PIN)
+        print("DOUT:", value)  # 0=低濃度, 1=高濃度（超過臨界值）
+        time.sleep(1)
         
 if __name__ == "__main__":
+    #max30102_test() 
     # face_test()
-    max30102_test()
+    mq3_test_dout()
     pass

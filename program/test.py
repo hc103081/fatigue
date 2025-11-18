@@ -217,7 +217,6 @@ def mq3_test():
         adc = spi.xfer2([1, (8 + channel) << 4, 0])
         data = ((adc[1] & 3) << 8) + adc[2]
         return data
-
     def convert_volts(data, places):
         volts = (data * 3.3) / 1023
         return round(volts, places)
