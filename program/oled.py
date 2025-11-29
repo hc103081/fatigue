@@ -1,39 +1,18 @@
+from luma.core.interface.serial import i2c
+from luma.oled.device import sh1106
+from PIL import ImageDraw, ImageFont, Image
 import time
-import Adafruit_SSD1306
-from PIL import Image, ImageDraw, ImageFont
 
-# Raspberry Pi pin configuration
-RST = None  # on PiOLED this pin isn't used
+serial = i2c(port=1, address=0x3C)
+device = sh1106(serial)
 
-# 128x64 display with hardware I2C:
-disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST)
+# 載入中文字型
+font = ImageFont.truetype("/usr/share/fonts/truetype/arphic/ukai.ttc", 20)  # 路徑與字型大小可調整
 
-# Initialize library.
-disp.begin()
-
-# Clear display.
-disp.clear()
-disp.display()
-
-# Create blank image for drawing.
-width = disp.width
-height = disp.height
-image = Image.new('1', (width, height))
-
-# Get drawing object to draw on image.
+image = Image.new('1', (device.width, device.height))
 draw = ImageDraw.Draw(image)
+draw.text((10, 30), "陪騎是給！", font=font, fill=255)
+device.display(image)
 
-# Draw a white filled box to clear the image.
-draw.rectangle((0, 0, width, height), outline=0, fill=0)
-
-# Load default font.
-font = ImageFont.load_default()
-
-# Write some text
-draw.text((0, 0), 'Hello, Raspberry Pi!', font=font, fill=255)
-
-# Display image.
-disp.image(image)
-disp.display()
-
-time.sleep(2)
+while True:
+    time.sleep(1)
