@@ -54,8 +54,24 @@ def mq3_test_dout():
         print("DOUT:", value)  # 0=低濃度, 1=高濃度（超過臨界值）
         time.sleep(1)
         
+def  face_analyze_test2():
+    from program import FaceAnalyzer
+    import cv2
+    import numpy as np  
+    
+        
+
+    camera = Camera(camera_index=0,
+                    frame_width=640,
+                    frame_height=480)
+    with FaceAnalyzer(camera) as face_analyzer:
+        while True:
+            face_analyzer.update(show=True)
+
+        
 if __name__ == "__main__":
     #max30102_test() 
     # face_test()
-    mq3_test_dout()
+    # mq3_test_dout()
+    face_analyze_test2()
     pass
