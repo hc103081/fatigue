@@ -247,8 +247,8 @@ if __name__ == "__main__":
     # face_analyze_test2()
     # face_analyze_test()
     # flask_test()
-    # alcohol_test()
-    mq3_test()
+    alcohol_test()
+    # mq3_test() 
     pass
     
 
