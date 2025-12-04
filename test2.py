@@ -53,9 +53,26 @@ def mq3_test_dout():
         value = GPIO.input(DOUT_PIN)
         print("DOUT:", value)  # 0=低濃度, 1=高濃度（超過臨界值）
         time.sleep(1)
-        
+def mq3_test_ddout():   
+    import RPi.GPIO as GPIO
+    import time
+
+    MQ3_DOUT_PIN = 17  # 假設你接在 GPIO17
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(MQ3_DOUT_PIN, GPIO.IN)
+
+    try:
+        while True:
+            if GPIO.input(MQ3_DOUT_PIN):
+                print("偵測到酒精")
+            else:
+                print("未偵測到酒精")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        GPIO.cleanup()
 if __name__ == "__main__":
     #max30102_test() 
     # face_test()
-    mq3_test_dout()
+    mq3_test_ddout()
     pass

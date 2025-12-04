@@ -3,6 +3,12 @@ from luma.oled.device import sh1106
 from PIL import ImageDraw, ImageFont, Image
 import time
 
+def clear_oled(device):
+    image = Image.new('1', (device.width, device.height))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, device.width, device.height), fill=0)
+    device.display(image)
+
 serial = i2c(port=1, address=0x3C)
 device = sh1106(serial)
 
