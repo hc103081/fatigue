@@ -89,6 +89,13 @@ class FaceAnalyzer():
             # 顯示臉部關鍵點
             if show:
                 self.show(frame,landmarks)
+                
+        if show:
+            # 顯示結果
+            cv2.imshow("Face Detection", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                pass
         
         return True
 
@@ -118,13 +125,7 @@ class FaceAnalyzer():
         # 顯示結果W
         text = f"Fatigue Score: {self.data.fatigue_score:.2f} | Fatigued: {self.data.is_fatigued}"
         cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if self.data.is_fatigued else (0, 255, 0), 2)
-            
         
-        # 顯示結果
-        cv2.imshow("Face Detection", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            pass
             
     
     def compute_ear(self,eye_points) -> float:
