@@ -66,7 +66,7 @@ def mq3_test_ddout():
         while True:
             if GPIO.input(MQ3_DOUT_PIN):
                 print("偵測到酒精")
-            else:
+            else:  
                 print("未偵測到酒精")
             time.sleep(1)
     except KeyboardInterrupt:
