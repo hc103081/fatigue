@@ -59,7 +59,7 @@ def init_components(app):
         
         # 初始化臉部分析器
         unified.fatigue = FaceAnalyzer(camera=unified.camera,
-                                threshold=0.3)
+                                threshold=0)
         
         # 初始化酒精感測器
         unified.alcohol = AlcoholSensor(use_mock=use_mock,
