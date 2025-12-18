@@ -11,6 +11,7 @@ from .web_Api import WebApi
 from .gpio import GPIO
 from .logs import Log
 from .camera import Camera
+from .mp3_player import MP3Player
 
 
 
@@ -26,5 +27,6 @@ __all__ = [
     "WebApi",
     "GPIO",
     "Log",
-    "Camera"
+    "Camera",
+    "MP3Player"
 ]

@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+import os
 import time
 from .logs import Log
 from .camera import Camera
 import dlib
 import numpy as np
 import cv2
+import google.generativeai as genai
+from supabase import create_client, Client
 
 class FaceAnalyzer():
     """臉部分析模組"""
@@ -17,11 +20,12 @@ class FaceAnalyzer():
         mar: float              # 嘴巴開合比
         threshold: float        # 疲勞閾值
     
-    def __init__(self, camera: Camera, threshold=0.3):
+    def __init__(self, camera: Camera, use_mock=False, threshold=0.3):
         """
         初始化臉部分析器
         Params:
             camera: 攝影機物件
+            use_mock: 是否使用模擬資料
             threshold: 疲勞閾值
         """
         self.camera = camera
@@ -38,6 +42,15 @@ class FaceAnalyzer():
         
         # 需下載此模型
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks_GTX.dat") 
+        
+        # 初始化 GenAI 模型
+        self.genai = genai.GenerativeModel("gemini-1.5-flash")
+        genai.configure(api_key=os.getenv("GENAI_API_KEY"))
+        
+        # 設定 Supabase
+        self.supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+        
+        self.is_test_data = use_mock
         
         # 記錄日志的時間間隔，單位：秒
         self.log_interval = 10  
@@ -62,7 +75,22 @@ class FaceAnalyzer():
     def update(self,show=False) -> bool:
         """
         更新影像分析數據
+        Params:
+            show: 是否顯示分析結果
+        Returns:
+            True: 成功更新
+            False: 失敗更新
         """
+        # 使用模擬資料
+        if self.is_test_data:
+            import random
+            self.data.ear = round(random.uniform(0.2, 0.3), 3)
+            self.data.mar = round(random.uniform(0.3, 0.6), 3)
+            self.data.fatigue_score = self.get_fatigue_score()
+            self.data.is_fatigued = self.is_fatigued()
+            return True
+        
+        # 從攝像頭獲取影像幀
         frame = self.camera.get_frame()
         if frame is None:
             now = time.time()
@@ -185,10 +213,4 @@ class FaceAnalyzer():
             如果疲勞值超過 threshold 則回傳 True
         """
         return (self.get_fatigue_score() > self.data.threshold)
-        
-        
-    def __enter__(self):
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
