@@ -52,7 +52,7 @@ class FaceAnalyzer():
 
         # 初始化 GenAI
         genai.configure(api_key=os.getenv("GENAI_API_KEY"))
-        self.genai = genai.GenerativeModel("gemini-2.5-flash")
+        self.genai = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
         # 影像幀緩衝區
         self.frame_buffer = collections.deque(maxlen=60)
