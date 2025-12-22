@@ -5,8 +5,12 @@ from .logs import Log
 from .camera import Camera
 import numpy as np
 import cv2
-import google.genai as genai
+import google.generativeai as genai
 import mediapipe as mp
+import collections
+import threading
+from PIL import Image
+import io
 
 class FaceAnalyzer():
     """臉部分析模組"""
@@ -47,8 +51,17 @@ class FaceAnalyzer():
         self.drawing_spec = self.mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
         # 初始化 GenAI
-        genai.init(api_key=os.getenv("GENAI_API_KEY"))
+        genai.configure(api_key=os.getenv("GENAI_API_KEY"))
         self.genai = genai.GenerativeModel("gemini-1.5-flash")
+
+        # 影像幀緩衝區
+        self.frame_buffer = collections.deque(maxlen=60)
+        # 閉眼計數器
+        self.closed_eyes_counter = 0
+        # 上次觸發時間
+        self.last_trigger_time = 0
+        # 冷卻時間 (秒)
+        self.cooldown_period = 5
 
         # 是否使用模擬資料
         self.is_test_data = use_mock
@@ -57,6 +70,7 @@ class FaceAnalyzer():
         self.log_interval = 10  
         
         self.last_log_time = time.time()
+
 
     def get_data(self) -> FatigueData:
         """
@@ -102,6 +116,9 @@ class FaceAnalyzer():
                 self.last_log_time = now
             return False
 
+        # 將 frame 加入緩衝區
+        self.frame_buffer.append(frame)
+
         # 將影像從 BGR 轉換為 RGB
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         image_rgb.flags.writeable = False
@@ -115,7 +132,21 @@ class FaceAnalyzer():
                 # 計算疲勞值
                 self.data.fatigue_score = self.get_fatigue_score()
                 self.data.is_fatigued = self.is_fatigued()
-                
+
+                # 檢查是否閉眼
+                if self.data.ear < 0.2:
+                    self.closed_eyes_counter += 1
+                else:
+                    self.closed_eyes_counter = 0
+
+                # 檢查是否觸發疲勞事件
+                current_time = time.time()
+                if self.closed_eyes_counter >= 15 and (current_time - self.last_trigger_time) > self.cooldown_period:
+                    self.last_trigger_time = current_time
+                    # 在新執行緒中觸發疲勞事件，避免阻塞主執行緒
+                    thread = threading.Thread(target=self._trigger_fatigue_action)
+                    thread.start()
+
                 # 顯示臉部關鍵點
                 if show:
                     self.show(frame, face_landmarks)
@@ -226,3 +257,53 @@ class FaceAnalyzer():
             如果疲勞值超過 threshold 則回傳 True
         """
         return (self.get_fatigue_score() > self.data.threshold)
+
+    def _trigger_fatigue_action(self):
+        """
+        觸發疲勞事件，組合過去、過渡、現在的影像並上傳至 GenAI 分析
+        """
+        if len(self.frame_buffer) < 45:
+            Log.logger.warning("緩衝區影像幀不足，無法觸發疲勞事件")
+            return
+
+        # 從緩衝區中取得過去、過渡、現在的影像
+        past_frame = self.frame_buffer[-45]
+        transition_frame = self.frame_buffer[-10]
+        now_frame = self.frame_buffer[-1]
+
+        # 調整影像大小並合併
+        past_frame_resized = cv2.resize(past_frame, (320, 240))
+        transition_frame_resized = cv2.resize(transition_frame, (320, 240))
+        now_frame_resized = cv2.resize(now_frame, (320, 240))
+        stitched_image = cv2.hconcat([past_frame_resized, transition_frame_resized, now_frame_resized])
+
+        # 上傳至 GenAI 分析
+        self.upload_fatigue_image_to_genai(stitched_image)
+
+    def upload_fatigue_image_to_genai(self, image: np.ndarray):
+        """
+        將影像上傳至 GenAI 進行疲勞分析
+        Params:
+            image: 要上傳的影像 (NumPy array)
+        """
+        try:
+            # 將 OpenCV 影像 (NumPy array) 轉換為 PIL Image
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(image_rgb)
+
+            # 準備上傳的內容
+            prompt = "分析這張圖片，判斷圖中人物是否呈現疲勞狀態。圖片由左至右分別為過去、過渡、現在三個時間點的畫面。"
+            
+            Log.logger.info("正在上傳影像至 GenAI 進行分析...")
+            
+            # 使用 GenAI 進行分析
+            response = self.genai.generate_content([prompt, pil_image])
+            
+            # 記錄 GenAI 的分析結果
+            if response and response.text:
+                Log.logger.info(f"GenAI 分析結果: {response.text}")
+            else:
+                Log.logger.warning("GenAI 未回傳有效的分析結果")
+
+        except Exception as e:
+            Log.logger.error(f"上傳影像至 GenAI 失敗: {e}")
