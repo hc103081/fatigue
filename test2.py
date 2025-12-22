@@ -55,7 +55,7 @@ def face_test():
         if genai_response:
             print(f"收到 GenAI 回應: {genai_response}")
             # 發送 LINE 通知
-            user_id = line_api.data.user_id['Kai']
+            user_id = line_api.data.user_id['Hong']
             line_api.message(f"疲勞分析結果：\n{genai_response}").sent(user_id)
 
         time.sleep(0.03)  # 模擬每秒約 30 幀
