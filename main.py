@@ -58,9 +58,7 @@ def init_components(app):
                         frame_height=480)
         
         # 初始化臉部分析器
-        unified.fatigue = FaceAnalyzer(camera=unified.camera,
-                                use_mock=True,
-                                threshold=0)
+        unified.fatigue = FaceAnalyzer()
         
         # 初始化酒精感測器
         unified.alcohol = AlcoholSensor(use_mock=True,

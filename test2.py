@@ -39,10 +39,23 @@ def mp3_test():
     while True:
         time.sleep(1)
 
+def face_test():
+    """
+    測試 FaceAnalyzer 功能
+    """
+    camera = Camera(frame_width=640, frame_height=480)
+    analyzer = FaceAnalyzer(camera=camera, use_mock=True)
+    for _ in range(5):
+        analyzer.update(show=True)
+        data = analyzer.get_data()
+        print(f"疲勞分數: {data.fatigue_score}, 是否疲勞: {data.is_fatigued}")
+        time.sleep(1)
+        
 
 if __name__ == "__main__":
     # line_api.open_sent_message()
     # test_sent_message()
-    mp3_test()
+    # mp3_test()
+    face_test()
     
     

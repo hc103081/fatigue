@@ -3,11 +3,10 @@ import os
 import time
 from .logs import Log
 from .camera import Camera
-import dlib
 import numpy as np
 import cv2
-import google.generativeai as genai
-from supabase import create_client, Client
+import google.genai as genai
+import mediapipe as mp
 
 class FaceAnalyzer():
     """臉部分析模組"""
@@ -37,18 +36,16 @@ class FaceAnalyzer():
             threshold=threshold
         )
         
-        # 載入 dlib 的臉部偵測器與關鍵點預測模型
-        self.detector = dlib.get_frontal_face_detector()
-        
-        # 需下載此模型
-        self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks_GTX.dat") 
-        
-        # 初始化 GenAI 模型
-        self.genai = genai.GenerativeModel("gemini-1.5-flash")
-        genai.configure(api_key=os.getenv("GENAI_API_KEY"))
-        
-        # 設定 Supabase
-        self.supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+        # 初始化 MediaPipe Face Mesh
+        self.mp_face_mesh = mp.solutions.face_mesh
+        self.face_mesh = self.mp_face_mesh.FaceMesh(
+            max_num_faces=1,
+            refine_landmarks=True,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5)
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.drawing_spec = self.mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+
         
         self.is_test_data = use_mock
         
@@ -100,23 +97,24 @@ class FaceAnalyzer():
                 Log.logger.warning("未取得影像 frame，跳過分析")
                 self.last_log_time = now
             return False
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        gray = cv2.equalizeHist(gray)
-        faces = self.detector(gray)
+
+        # 將影像從 BGR 轉換為 RGB
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image_rgb.flags.writeable = False
+        results = self.face_mesh.process(image_rgb)
+        image_rgb.flags.writeable = True
         
-        for face in faces:
-            # 提取臉部關鍵點
-            landmarks = self.predictor(gray, face)
-            
-            # 提取眼睛縱橫比和嘴巴開合比
-            self.data.ear,self.data.mar = self.get_ear_mar(landmarks)
-            # 計算疲勞值
-            self.data.fatigue_score = self.get_fatigue_score()
-            self.data.is_fatigued = self.is_fatigued()
-            
-            # 顯示臉部關鍵點
-            if show:
-                self.show(frame,landmarks)
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+                # 提取眼睛縱橫比和嘴巴開合比
+                self.data.ear, self.data.mar = self.get_ear_mar(face_landmarks, frame.shape[1], frame.shape[0])
+                # 計算疲勞值
+                self.data.fatigue_score = self.get_fatigue_score()
+                self.data.is_fatigued = self.is_fatigued()
+                
+                # 顯示臉部關鍵點
+                if show:
+                    self.show(frame, face_landmarks)
                 
         if show:
             # 顯示結果
@@ -135,20 +133,13 @@ class FaceAnalyzer():
             Log.logger.warning("未取得影像 frame，跳過顯示")
             return
 
-        # 畫左眼 (特徵點 36–41)
-        for i in range(36, 42):
-            x, y = landmarks.part(i).x, landmarks.part(i).y
-            cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
-
-        # 畫右眼 (特徵點 42–47)
-        for i in range(42, 48):
-            x, y = landmarks.part(i).x, landmarks.part(i).y
-            cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
-
-        # 畫嘴巴 (特徵點 48–67)
-        for i in range(48, 68):
-            x, y = landmarks.part(i).x, landmarks.part(i).y
-            cv2.circle(frame, (x, y), 2, (0, 0, 255), -1)
+        # 使用 MediaPipe 的繪圖工具繪製臉部網格
+        self.mp_drawing.draw_landmarks(
+            image=frame,
+            landmark_list=landmarks,
+            connections=self.mp_face_mesh.FACEMESH_TESSELATION,
+            landmark_drawing_spec=self.drawing_spec,
+            connection_drawing_spec=self.drawing_spec)
 
         # 顯示結果W
         text = f"Fatigue Score: {self.data.fatigue_score:.2f} | Fatigued: {self.data.is_fatigued}"
@@ -170,22 +161,39 @@ class FaceAnalyzer():
         """
         計算嘴巴張開比 MAR
         """
-        A = np.linalg.norm(mouth_points[13] - mouth_points[19])  # 上下
-        B = np.linalg.norm(mouth_points[14] - mouth_points[18])
-        C = np.linalg.norm(mouth_points[12] - mouth_points[16])  # 左右
-        mar = (A + B) / (2.0 * C)
+        # 使用內唇垂直距離與嘴角水平距離計算
+        inner_lip_vertical_dist = np.linalg.norm(mouth_points[4] - mouth_points[5])
+        mouth_width = np.linalg.norm(mouth_points[0] - mouth_points[1])
+        
+        # 避免除以零
+        if mouth_width == 0:
+            return 0.0
+            
+        mar = inner_lip_vertical_dist / mouth_width
         return mar
 
-    def get_ear_mar(self,landmarks) -> tuple:
+    def get_ear_mar(self,landmarks, img_w, img_h) -> tuple:
         """
         計算眼睛縱橫比 EAR 與嘴巴張開比 MAR
         """
-        left_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(36, 42)])
-        right_eye = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(42, 48)])
-        mouth = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(48, 68)])
+        # 將正規化座標轉換為像素座標
+        landmark_points = np.array([[lm.x * img_w, lm.y * img_h] for lm in landmarks.landmark])
 
-        ear = (self.compute_ear(left_eye) + self.compute_ear(right_eye)) / 2.0
-        mar = self.compute_mar(mouth)
+        # MediaPipe 的眼睛與嘴巴特徵點索引
+        # 參考: https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
+        LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]
+        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]
+        # [嘴角左, 嘴角右, 上唇頂, 下唇底, 內上唇, 內下唇]
+        MOUTH_INDICES = [61, 291, 0, 17, 13, 14]
+
+        # 提取眼睛和嘴巴的特徵點
+        left_eye_points = landmark_points[LEFT_EYE_INDICES]
+        right_eye_points = landmark_points[RIGHT_EYE_INDICES]
+        mouth_points = landmark_points[MOUTH_INDICES]
+
+        # 計算 EAR 和 MAR
+        ear = (self.compute_ear(left_eye_points) + self.compute_ear(right_eye_points)) / 2.0
+        mar = self.compute_mar(mouth_points)
         return ear,mar
 
     def get_fatigue_score(self) -> float:
@@ -213,4 +221,3 @@ class FaceAnalyzer():
             如果疲勞值超過 threshold 則回傳 True
         """
         return (self.get_fatigue_score() > self.data.threshold)
-
