@@ -49,6 +49,15 @@ def face_test():
         analyzer.update(show=True)
         data = analyzer.get_data()
         print(f"疲勞分數: {data.fatigue_score}, 是否疲勞: {data.is_fatigued}")
+
+        # 檢查是否有來自 GenAI 的新回應
+        genai_response = analyzer.get_genai_response()
+        if genai_response:
+            print(f"收到 GenAI 回應: {genai_response}")
+            # 發送 LINE 通知
+            user_id = line_api.data.user_id['Kai']
+            line_api.message(f"疲勞分析結果：\n{genai_response}").sent(user_id)
+
         time.sleep(0.03)  # 模擬每秒約 30 幀
         
 
@@ -57,5 +66,3 @@ if __name__ == "__main__":
     # test_sent_message()
     # mp3_test()
     face_test()
-    
-    

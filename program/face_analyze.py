@@ -63,6 +63,9 @@ class FaceAnalyzer():
         # 冷卻時間 (秒)
         self.cooldown_period = 5
 
+        # GenAI 分析結果
+        self.last_genai_response = None
+
         # 是否使用模擬資料
         self.is_test_data = use_mock
         
@@ -258,6 +261,14 @@ class FaceAnalyzer():
         """
         return (self.get_fatigue_score() > self.data.threshold)
 
+    def get_genai_response(self) -> str | None:
+        """
+        取得最新的 GenAI 分析結果，如果沒有新結果則回傳 None
+        """
+        response = self.last_genai_response
+        self.last_genai_response = None # 讀取後清除
+        return response
+
     def _trigger_fatigue_action(self):
         """
         觸發疲勞事件，組合過去、過渡、現在的影像並上傳至 GenAI 分析
@@ -277,14 +288,16 @@ class FaceAnalyzer():
         now_frame_resized = cv2.resize(now_frame, (320, 240))
         stitched_image = cv2.hconcat([past_frame_resized, transition_frame_resized, now_frame_resized])
 
-        # 上傳至 GenAI 分析
-        self.upload_fatigue_image_to_genai(stitched_image)
+        # 上傳至 GenAI 分析並儲存結果
+        self.last_genai_response = self.upload_fatigue_image_to_genai(stitched_image)
 
-    def upload_fatigue_image_to_genai(self, image: np.ndarray):
+    def upload_fatigue_image_to_genai(self, image: np.ndarray) -> str | None:
         """
         將影像上傳至 GenAI 進行疲勞分析
         Params:
             image: 要上傳的影像 (NumPy array)
+        Returns:
+            GenAI 的分析結果文字，或在失敗時回傳 None
         """
         try:
             # 將 OpenCV 影像 (NumPy array) 轉換為 PIL Image
@@ -302,8 +315,11 @@ class FaceAnalyzer():
             # 記錄 GenAI 的分析結果
             if response and response.text:
                 Log.logger.info(f"GenAI 分析結果: {response.text}")
+                return response.text
             else:
                 Log.logger.warning("GenAI 未回傳有效的分析結果")
+                return None
 
         except Exception as e:
             Log.logger.error(f"上傳影像至 GenAI 失敗: {e}")
+            return None
