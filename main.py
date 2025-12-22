@@ -1,6 +1,7 @@
 from flask import Flask
 import threading
 import time
+import json
 
 # program class
 from program import *
@@ -58,7 +59,7 @@ def init_components(app):
                         frame_height=480)
         
         # 初始化臉部分析器
-        unified.fatigue = FaceAnalyzer()
+        unified.fatigue = FaceAnalyzer(camera=unified.camera)
         
         # 初始化酒精感測器
         unified.alcohol = AlcoholSensor(use_mock=True,
@@ -156,10 +157,128 @@ def refresh_sensor_data():
         # 發送 LINE 警示訊息
         unified.line_api.message(f"警告：偵測到疲勞，請注意休息！")
     
+    # 檢查是否有來自 GenAI 的深度分析回應
+    genai_response = unified.fatigue.get_genai_response()
+    if genai_response:
+        try:
+            # 解析專業報告 JSON
+            report_data = json.loads(genai_response)
+            
+            # 填充 Flex Message 模板
+            flex_template = {
+              "type": "bubble",
+              "header": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "📝 GenAI 疲勞回應分析",
+                    "weight": "bold",
+                    "size": "lg",
+                    "align": "center"
+                  }
+                ]
+              },
+              "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "📌 摘要",
+                    "weight": "bold",
+                    "size": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": report_data.get("summary", "無"),
+                    "wrap": True,
+                    "margin": "sm"
+                  },
+                  {
+                    "type": "separator",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": "🔎 分析",
+                    "weight": "bold",
+                    "size": "md",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": report_data.get("analysis", "無"),
+                    "wrap": True,
+                    "margin": "sm"
+                  },
+                  {
+                    "type": "separator",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": "📊 結論",
+                    "weight": "bold",
+                    "size": "md",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "wrap": True,
+                    "margin": "sm",
+                    "text": report_data.get("conclusion", "無")
+                  },
+                  {
+                    "type": "separator",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": "💡 建議",
+                    "weight": "bold",
+                    "size": "md",
+                    "margin": "md"
+                  },
+                  {
+                    "type": "text",
+                    "text": report_data.get("suggestion", "無"),
+                    "wrap": True,
+                    "margin": "sm"
+                  }
+                ]
+              },
+              "footer": {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "button",
+                    "style": "primary",
+                    "color": "#4CAF50",
+                    "action": {
+                      "type": "uri",
+                      "label": "查看完整分析",
+                      "uri": "https://example.com/genai-fatigue-report"
+                    }
+                  }
+                ]
+              }
+            }
+            
+            # 將 Flex Message 加入佇列
+            unified.line_api.flex_message(flex_template)
+
+        except (json.JSONDecodeError, KeyError) as e:
+            # 如果 JSON 解析失敗或格式不符，退回發送純文字
+            Log.logger.warning(f"解析 GenAI 回應失敗: {e}，將以純文字發送。")
+            unified.line_api.message("AI 深度分析結果 (格式錯誤)：").message(genai_response)
+
     user_id = unified.line_api.data.user_id['Hong']
+    # 一次性發送所有在佇列中的訊息 (文字 + Flex)
     if len(unified.line_api.messages) > 0:
         unified.line_api.sent(user_id)
-    print(f"\n{unified.line_api.messages}")
 
 
 if __name__ == "__main__":

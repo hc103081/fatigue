@@ -52,7 +52,7 @@ class FaceAnalyzer():
 
         # 初始化 GenAI
         genai.configure(api_key=os.getenv("GENAI_API_KEY"))
-        self.genai = genai.GenerativeModel("gemini-1.5-flash")
+        self.genai = genai.GenerativeModel("gemini-2.5-flash")
 
         # 影像幀緩衝區
         self.frame_buffer = collections.deque(maxlen=60)
@@ -61,7 +61,7 @@ class FaceAnalyzer():
         # 上次觸發時間
         self.last_trigger_time = 0
         # 冷卻時間 (秒)
-        self.cooldown_period = 5
+        self.cooldown_period = 60
 
         # GenAI 分析結果
         self.last_genai_response = None
@@ -266,6 +266,7 @@ class FaceAnalyzer():
         取得最新的 GenAI 分析結果，如果沒有新結果則回傳 None
         """
         response = self.last_genai_response
+        Log.logger.info(f"取得 GenAI 回應: {response}")
         self.last_genai_response = None # 讀取後清除
         return response
 
@@ -289,23 +290,46 @@ class FaceAnalyzer():
         stitched_image = cv2.hconcat([past_frame_resized, transition_frame_resized, now_frame_resized])
 
         # 上傳至 GenAI 分析並儲存結果
-        self.last_genai_response = self.upload_fatigue_image_to_genai(stitched_image)
+        self.last_genai_response = self.upload_fatigue_image_to_genai(
+            stitched_image,
+            ear=self.data.ear,
+            mar=self.data.mar,
+            fatigue_score=self.data.fatigue_score
+        )
 
-    def upload_fatigue_image_to_genai(self, image: np.ndarray) -> str | None:
+    def upload_fatigue_image_to_genai(self, image: np.ndarray, ear: float, mar: float, fatigue_score: float) -> str | None:
         """
         將影像上傳至 GenAI 進行疲勞分析
         Params:
             image: 要上傳的影像 (NumPy array)
+            ear: 眼睛縱橫比 (Eye Aspect Ratio)
+            mar: 嘴巴開合比 (Mouth Aspect Ratio)
+            fatigue_score: 系統計算的疲勞分數
         Returns:
-            GenAI 的分析結果文字，或在失敗時回傳 None
+            GenAI 的分析結果 JSON 字串，或在失敗時回傳 None
         """
         try:
             # 將 OpenCV 影像 (NumPy array) 轉換為 PIL Image
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             pil_image = Image.fromarray(image_rgb)
 
-            # 準備上傳的內容
-            prompt = "分析這張圖片，判斷圖中人物是否呈現疲勞狀態。圖片由左至右分別為過去、過渡、現在三個時間點的畫面。"
+            # 準備上傳的內容 (僅保留專業版 JSON 格式)
+            prompt = f"""
+請根據這張組合圖片與數據，用台灣人習慣的繁體中文，生成一份專業的疲勞分析報告。
+
+**數據:**
+- 眼睛縱橫比 (EAR): {ear:.2f}
+- 嘴巴開合比 (MAR): {mar:.2f}
+- 系統疲勞分數: {fatigue_score:.2f}
+
+**回傳格式 (請嚴格遵守 JSON 格式，不要包含任何 ```json ``` 標籤):**
+{{
+  "summary": "在這裡簡短敘述重點，約 20-30 字。",
+  "analysis": "在這裡提供詳細的視覺分析，說明您判斷的依據，例如眼睛狀態、嘴巴狀態、面部表情等。",
+  "conclusion": "在這裡給出明確的結論，例如『綜合判斷，人物處於高度疲勞狀態』。",
+  "suggestion": "在這裡提供具體的建議，例如『建議立即停車休息 15 分鐘』或『狀態良好，可繼續駕駛』。"
+}}
+"""
             
             Log.logger.info("正在上傳影像至 GenAI 進行分析...")
             

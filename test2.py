@@ -48,7 +48,7 @@ def face_test():
     while True:
         analyzer.update(show=True)
         data = analyzer.get_data()
-        print(f"疲勞分數: {data.fatigue_score}, 是否疲勞: {data.is_fatigued}")
+        print(f"疲勞分數: {data.fatigue_score}, 是否疲勞: {data.is_fatigued}", end='\r', flush=True)
 
         # 檢查是否有來自 GenAI 的新回應
         genai_response = analyzer.get_genai_response()
