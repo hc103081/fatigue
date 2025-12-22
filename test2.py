@@ -44,12 +44,12 @@ def face_test():
     測試 FaceAnalyzer 功能
     """
     camera = Camera(frame_width=640, frame_height=480)
-    analyzer = FaceAnalyzer(camera=camera, use_mock=True)
-    for _ in range(5):
+    analyzer = FaceAnalyzer(camera=camera, use_mock=False)
+    while True:
         analyzer.update(show=True)
         data = analyzer.get_data()
         print(f"疲勞分數: {data.fatigue_score}, 是否疲勞: {data.is_fatigued}")
-        time.sleep(1)
+        time.sleep(0.03)  # 模擬每秒約 30 幀
         
 
 if __name__ == "__main__":

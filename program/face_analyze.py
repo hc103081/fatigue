@@ -46,7 +46,11 @@ class FaceAnalyzer():
         self.mp_drawing = mp.solutions.drawing_utils
         self.drawing_spec = self.mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
-        
+        # 初始化 GenAI
+        genai.init(api_key=os.getenv("GENAI_API_KEY"))
+        self.genai = genai.GenerativeModel("gemini-1.5-flash")
+
+        # 是否使用模擬資料
         self.is_test_data = use_mock
         
         # 記錄日志的時間間隔，單位：秒
@@ -121,7 +125,8 @@ class FaceAnalyzer():
             cv2.imshow("Face Detection", frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                pass
+                cv2.destroyAllWindows()
+                return False
         
         return True
 
