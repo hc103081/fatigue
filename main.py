@@ -5,6 +5,9 @@ import json
 
 # program class
 from program import *
+# 導入 dotenv 模組以載入環境變數
+from dotenv import load_dotenv
+load_dotenv() # 載入 .env 檔案中的環境變數
 
 def main():
     app = Flask(__name__)
@@ -20,17 +23,9 @@ def main():
                                                 args=(1.0,))
         thread_list.append(update_sensor_thread)
         
-        # 啟動 Line Bot 執行緒
+        # 啟動 Line Bot 執行緒 (已棄用)
         # line_bot_thread = threading.Thread(target=line_bot.run)
         # thread_list.append(line_bot_thread)
-        
-        # 啟動 Web API 執行緒
-        # web_api_thread = threading.Thread(target=web_api.run)
-        # thread_list.append(web_api_thread)
-        
-        # 啟動 ngrok 執行緒
-        # ngrok_thread = threading.Thread(target=ngrok.run)
-        # thread_list.append(ngrok_thread)
         
         # 啟動所有執行緒
         for thread in thread_list:
@@ -45,8 +40,8 @@ def main():
 
 def init_components(app):
     """
-    初始化組件
     Params:
+    初始化組件
         app (Flask): Flask 應用實例
     """
     global unified, mp3_player
@@ -65,38 +60,23 @@ def init_components(app):
         unified.alcohol = AlcoholSensor(use_mock=True,
                                 limit=0.15)
         
-        # 初始化心率感測器
-        unified.heart = HeartRateSensor(use_mock=True,
-                                threshold_low=60,
-                                threshold_high=100)
-        
         # 初始化 Line API
         unified.line_api = Line_Api(
                     {'Hong':'Uc588694833df79cafd6d19b3c2f505af',
                     'Kai': 'U44a5e3e3cf9c8835a64bb1273b08f457'
                     },
-                    access_token='ltwy2UPyvHTg7JAKyDWeRuQsF2wGkiGbe7zguLV9K6P5Gxbh8LyV8TgecpwefKmsVjDrv+pHqDIjzM2kuolIt2 Co2xQ0PLnIPdw57yuKJ9+l2L7xhrnZAKKHyX+PVhlUcMtJ1zokKK8/HoJpbzvLsQdB04t89/1O/w1cDnyilFU=',
-                    secret='ccb3a53029a0ae2eda6fd90ed07e4fd0',
                     state_open=True,
                     )       
         
         # 初始化統一資料結構
         unified.data = DataUnified(
             alcohol=unified.alcohol.get_data(),
-            heart=unified.heart.get_data(),
+            # heart=unified.heart.get_data(), # 心率感測器已棄用
             fatigue=unified.fatigue.get_data(),
         )
         
-        # 初始化 ngrok
-        # ngrok = Ngrok()
-        
-        # 初始化 Line Bot
+        # 初始化 Line Bot (已棄用)
         # line_bot = Line_bot(app,unified)
-        
-        # 初始化 Web API
-        # web_api = WebApi(unified,
-        #                  interval_data=1,
-        #                  interval_image=0.1)
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
@@ -108,7 +88,7 @@ def update_sensor_data(interval: float = 1.0):
     """
     def run_sensor():
         unified.alcohol.update()
-        unified.heart.update()
+        # unified.heart.update() # 心率感測器已棄用
     try:
         while True:
             sensor_thread = threading.Thread(target=run_sensor)

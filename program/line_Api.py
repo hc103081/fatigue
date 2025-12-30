@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import time
+import os # Import os module to access environment variables
 from .logs import Log
 import json
 
@@ -25,9 +26,15 @@ class Line_Api:
         
         
     def __init__(self,user_id: dict = {},
-                 access_token: str = '',
-                 secret: str = '',
                  state_open: bool = False):
+        # 從環境變數讀取 LINE_CHANNEL_ACCESS_TOKEN 和 LINE_CHANNEL_SECRET
+        access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+        secret = os.getenv("LINE_CHANNEL_SECRET")
+
+        if not access_token or not secret:
+            Log.logger.error("LINE_CHANNEL_ACCESS_TOKEN 或 LINE_CHANNEL_SECRET 未設定。請檢查環境變數。")
+            raise ValueError("LINE_CHANNEL_ACCESS_TOKEN 或 LINE_CHANNEL_SECRET 未設定。")
+
         self.data = self.LineData(
             user_id=user_id,
             access_token=access_token,
