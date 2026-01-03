@@ -266,7 +266,6 @@ class FaceAnalyzer():
         取得最新的 GenAI 分析結果，如果沒有新結果則回傳 None
         """
         response = self.last_genai_response
-        Log.logger.info(f"取得 GenAI 回應: {response}")
         self.last_genai_response = None # 讀取後清除
         return response
 
