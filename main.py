@@ -20,7 +20,7 @@ def main():
         
         # 啟動感測器更新執行緒
         update_sensor_thread = threading.Thread(target=update_sensor_data,
-                                                args=(1.0,))
+                                                args=(0.03,))
         thread_list.append(update_sensor_thread)
         
         # 啟動 Line Bot 執行緒 (已棄用)
