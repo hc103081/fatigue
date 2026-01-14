@@ -35,8 +35,8 @@ class AlcoholSensor:
         if self.use_mock:
             self.data.alcohol_value = round(random.uniform(0.0, 0.2), 3)
         else:
-            # 這裡放真實感測器資料刷新邏輯
-            pass
+            self.data.alcohol_value = 0.0  # 這裡應該放置實際讀取酒精感測器的程式碼
+            
         return True
     
     def get_data(self):

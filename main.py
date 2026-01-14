@@ -71,12 +71,9 @@ def init_components(app):
         # 初始化統一資料結構
         unified.data = DataUnified(
             alcohol=unified.alcohol.get_data(),
-            # heart=unified.heart.get_data(), # 心率感測器已棄用
             fatigue=unified.fatigue.get_data(),
         )
-        
-        # 初始化 Line Bot (已棄用)
-        # line_bot = Line_bot(app,unified)
+
         
     except Exception as e:
         Log.logger.warning(f"發生錯誤: {e}")
@@ -88,7 +85,6 @@ def update_sensor_data(interval: float = 1.0):
     """
     def run_sensor():
         unified.alcohol.update()
-        # unified.heart.update() # 心率感測器已棄用
     try:
         while True:
             sensor_thread = threading.Thread(target=run_sensor)
@@ -106,17 +102,15 @@ def update_sensor_data(interval: float = 1.0):
         Log.logger.warning(f"發生錯誤: {e}")
         raise e
 
-def refresh_sensor_data():
+def refresh_sensor_data(alcohol_warning_interval: float = 60.0):
     """
     刷新感測器資料，並判斷是否需警示
     """
     unified.data = DataUnified(
         alcohol=unified.alcohol.get_data(),
-        heart=unified.heart.get_data(),
         fatigue=unified.fatigue.get_data(),
     )
     print(f"Alcohol: {unified.data.alcohol.alcohol_value:.3f}, "
-          f"Heart: {unified.data.heart.bpm_average:.0f}, "
           f"Fatigue: {unified.data.fatigue.fatigue_score:.2f}",end="\r",flush=True)
 
     # 判斷是否在傳送訊息冷卻時間內
@@ -124,7 +118,8 @@ def refresh_sensor_data():
         return
     
     # 判斷酒精濃度是否超標
-    if unified.data.alcohol.is_over_limit:
+    if unified.data.alcohol.is_over_limit and time.time() - alcohol_warning_time_last > alcohol_warning_interval:
+        alcohol_warning_time_last = time.time()
         # 播放酒精警示音效
         mp3_player.play("alcohol_warning", loops=0)
         # 發送 LINE 警示訊息
