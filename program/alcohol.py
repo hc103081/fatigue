@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 import random
+from gpiozero import MCP3008
+import time
 from .logs import Log
 
 class AlcoholSensor:
@@ -35,7 +37,12 @@ class AlcoholSensor:
         if self.use_mock:
             self.data.alcohol_value = round(random.uniform(0.0, 0.2), 3)
         else:
-            self.data.alcohol_value = 0.0  # 這裡應該放置實際讀取酒精感測器的程式碼
+            # MCP3008 的 CH0 通道
+            sensor = MCP3008(channel=0)
+
+            value = sensor.value  # 取得 0~1 之間的類比值
+            print(f"MQ3感測器數值: {value:.3f}", end='\r', flush=True)
+            self.data.alcohol_value = value
             
         return True
     

@@ -57,10 +57,16 @@ def face_test():
             line_api.message(f"疲勞分析結果：\n{genai_response}").sent(user_id)
 
         time.sleep(0.03)  # 模擬每秒約 30 幀
+
+def alcohol_test():
+    pass
+
+    
         
 
 if __name__ == "__main__":
     # line_api.open_sent_message()
     # test_sent_message()
     # mp3_test()
-    face_test()
+    # face_test()
+    alcohol_test()

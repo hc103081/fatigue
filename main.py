@@ -23,10 +23,6 @@ def main():
                                                 args=(0.03,))
         thread_list.append(update_sensor_thread)
         
-        # 啟動 Line Bot 執行緒 (已棄用)
-        # line_bot_thread = threading.Thread(target=line_bot.run)
-        # thread_list.append(line_bot_thread)
-        
         # 啟動所有執行緒
         for thread in thread_list:
             thread.start()
@@ -57,7 +53,7 @@ def init_components(app):
         unified.fatigue = FaceAnalyzer(camera=unified.camera)
         
         # 初始化酒精感測器
-        unified.alcohol = AlcoholSensor(use_mock=True,
+        unified.alcohol = AlcoholSensor(use_mock=False,
                                 limit=0.15)
         
         # 初始化 Line API
