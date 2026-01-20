@@ -74,6 +74,11 @@ class FaceAnalyzer():
         
         self.last_log_time = time.time()
 
+        # 用於影像顯示的執行緒
+        self._show_thread = None
+        self._frame_to_show = None
+        self._show_stop_event = threading.Event()
+
 
     def get_data(self) -> FatigueData:
         """
@@ -128,6 +133,9 @@ class FaceAnalyzer():
         results = self.face_mesh.process(image_rgb)
         image_rgb.flags.writeable = True
         
+        # 預設一個 frame 用於顯示，即使沒有偵測到臉部
+        display_frame = frame.copy()
+
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
                 # 提取眼睛縱橫比和嘴巴開合比
@@ -150,18 +158,21 @@ class FaceAnalyzer():
                     thread = threading.Thread(target=self._trigger_fatigue_action)
                     thread.start()
 
-                # 顯示臉部關鍵點
+                # 在顯示用的 frame 上繪製臉部關鍵點
                 if show:
-                    self.show(frame, face_landmarks)
-                
-        if show:
-            # 顯示結果
-            cv2.imshow("Face Detection", frame)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                return False
+                    self.show(display_frame, face_landmarks)
         
+        if show:
+            self._frame_to_show = display_frame
+            if self._show_thread is None or not self._show_thread.is_alive():
+                self._show_stop_event.clear()
+                self._show_thread = threading.Thread(target=self._show_worker, daemon=True)
+                self._show_thread.start()
+        
+        # 如果外部停止了顯示，則返回 False 以便主循環可以退出
+        if self._show_stop_event.is_set():
+            return False
+
         return True
 
     def show(self,frame,landmarks) -> None:
@@ -184,6 +195,38 @@ class FaceAnalyzer():
         text = f"Fatigue Score: {self.data.fatigue_score:.2f} | Fatigued: {self.data.is_fatigued}"
         cv2.putText(frame, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if self.data.is_fatigued else (0, 255, 0), 2)
         
+    def _show_worker(self):
+        """
+        在獨立執行緒中處理影像顯示
+        """
+        while not self._show_stop_event.is_set():
+            if self._frame_to_show is not None:
+                try:
+                    cv2.imshow("Face Detection", self._frame_to_show)
+                    # 偵測 'q' 鍵以停止
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        self._show_stop_event.set()
+                except cv2.error:
+                    # 視窗可能被手動關閉
+                    self._show_stop_event.set()
+            else:
+                # 若無影像幀，短暫休眠以避免 CPU 佔用過高
+                time.sleep(0.01)
+        
+        try:
+            cv2.destroyAllWindows()
+        except cv2.error:
+            # 視窗可能已經被銷毀
+            pass
+
+    def close(self):
+        """
+        停止分析並清理資源
+        """
+        if self._show_thread is not None and self._show_thread.is_alive():
+            self._show_stop_event.set()
+            self._show_thread.join()
+        self.camera.close()
             
     
     def compute_ear(self,eye_points) -> float:
