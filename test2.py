@@ -68,5 +68,5 @@ if __name__ == "__main__":
     # line_api.open_sent_message()
     # test_sent_message()
     # mp3_test()
-    # face_test()
-    alcohol_test()
+    face_test()
+    # alcohol_test()

@@ -83,13 +83,13 @@ def update_sensor_data(interval: float = 1.0):
         unified.alcohol.update()
     try:
         while True:
-            sensor_thread = threading.Thread(target=run_sensor)
-            fatigue_thread = threading.Thread(target=unified.fatigue.update)
+            # sensor_thread = threading.Thread(target=run_sensor)
+            fatigue_thread = threading.Thread(target=unified.fatigue.update, args=(True,))
 
-            sensor_thread.start()
+            # sensor_thread.start()
             fatigue_thread.start()
 
-            sensor_thread.join()
+            # sensor_thread.join()
             fatigue_thread.join()
 
             refresh_sensor_data()
@@ -98,7 +98,11 @@ def update_sensor_data(interval: float = 1.0):
         Log.logger.warning(f"發生錯誤: {e}")
         raise e
 
-def refresh_sensor_data(alcohol_warning_interval: float = 60.0):
+fatigue_warning_time_last = 0.0
+alcohol_warning_time_last = 0.0
+
+def refresh_sensor_data(alcohol_warning_interval: float = 10.0
+                        , fatigue_warning_interval: float = 10.0):
     """
     刷新感測器資料，並判斷是否需警示
     """
@@ -108,6 +112,7 @@ def refresh_sensor_data(alcohol_warning_interval: float = 60.0):
     )
     print(f"Alcohol: {unified.data.alcohol.alcohol_value:.3f}, "
           f"Fatigue: {unified.data.fatigue.fatigue_score:.2f}",end="\r",flush=True)
+    global fatigue_warning_time_last, alcohol_warning_time_last
 
     # 判斷是否在傳送訊息冷卻時間內
     if unified.line_api.is_sent_cooldown():
@@ -122,7 +127,8 @@ def refresh_sensor_data(alcohol_warning_interval: float = 60.0):
         unified.line_api.message(f"警告：酒精濃度超標，請勿駕駛！")
 
     # 判斷疲勞分數是否超過閾值
-    if unified.data.fatigue.is_fatigued:
+    if unified.data.fatigue.is_fatigued and time.time() - fatigue_warning_time_last > fatigue_warning_interval:
+        fatigue_warning_time_last = time.time()
         # 播放疲勞警示音效
         mp3_player.play("fatigue_warning", loops=0)
         # 發送 LINE 警示訊息
